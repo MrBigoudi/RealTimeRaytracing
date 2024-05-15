@@ -1,0 +1,6 @@
+build
+*.o
+*.d
+.cache
+vg*
+out.txt
