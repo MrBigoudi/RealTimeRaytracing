@@ -123,14 +123,14 @@ void Application::drawOneFrame() const {
     _RenderingProgram->use();
 
     // create the texture
-    // float r = 1.f;
-    // float g = 0.f;
-    // float b = 0.f;
-    // float a = 1.f;
-    // GLuint colorTexture = createSolidColorTexture(r,g,b,a); // Red color
-    // // matches the binding location in the shader
-    // GLuint bindingLocation = 0;
-    // glBindTextureUnit(bindingLocation, colorTexture);    
+    float r = 1.f;
+    float g = 0.f;
+    float b = 0.f;
+    float a = 1.f;
+    GLuint colorTexture = createSolidColorTexture(r,g,b,a); // Red color
+    // matches the binding location in the shader
+    GLuint bindingLocation = 0;
+    glBindTextureUnit(bindingLocation, colorTexture);    
     
     glBindVertexArray(_RectangleVao);
     GLint firstIndex = 0;
@@ -184,12 +184,22 @@ void Application::mainLoop(){
 // Function to create a simple color texture
 GLuint Application::createSolidColorTexture(float r, float g, float b, float a) const {
     // Define the color data
-    unsigned char textureData[4] = {
-        static_cast<unsigned char>(r * 255),
-        static_cast<unsigned char>(g * 255),
-        static_cast<unsigned char>(b * 255),
-        static_cast<unsigned char>(a * 255)
-    };
+    size_t bytesPerPixel = 4;
+    size_t dataSize = _Parameters._ViewportWidth * _Parameters._ViewportWidth * bytesPerPixel;
+    unsigned char* textureData = new unsigned char[dataSize];
+
+    unsigned char red = static_cast<unsigned char>(r * 255);
+    unsigned char green = static_cast<unsigned char>(g * 255);
+    unsigned char blue = static_cast<unsigned char>(b * 255);
+    unsigned char alpha = static_cast<unsigned char>(a * 255);
+
+    // Fill the texture data with the solid color
+    for (size_t i = 0; i < dataSize; i += 4) {
+        textureData[i] = red;
+        textureData[i + 1] = green;
+        textureData[i + 2] = blue;
+        textureData[i + 3] = alpha;
+    }
 
     GLuint texture;
     GLsizei numberOfTextures = 1;

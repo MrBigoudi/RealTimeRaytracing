@@ -10,6 +10,6 @@ layout(location = 0) out vec4 oColor;
 layout(binding = 0) uniform sampler2D raytracedTexture;
 
 void main(){
-    // oColor = texture(raytracedTexture, iTexCoord);
-    oColor = vec4(0.f,1.f,0.f,1.f);
+    oColor = texture(raytracedTexture, iTexCoord);
+    // oColor = vec4(0.f,1.f,0.f,1.f);
 }
