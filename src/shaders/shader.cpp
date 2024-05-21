@@ -53,6 +53,9 @@ void Shader::compileShader(const std::string& shaderCode){
         case FRAGMENT_SHADER:
             _Id = glCreateShader(GL_FRAGMENT_SHADER);
             break;
+        case COMPUTE_SHADER:
+            _Id = glCreateShader(GL_COMPUTE_SHADER);
+            break;
         default:
             ErrorHandler::handle(
                 __FILE__, 

@@ -14,7 +14,13 @@ Program::~Program(){
 }
 
 void Program::setShader(ShaderPtr shader){
-    _Shaders[shader->getType()] = shader;
+    switch(shader->getType()){
+        case COMPUTE_SHADER:
+            ErrorHandler::handle(__FILE__, __LINE__, ErrorCode::USAGE_ERROR, "Can't set a compute shader!\n");
+            break;
+        default:
+            _Shaders[shader->getType()] = shader;
+    }
     linkShaders();
 }
 
@@ -61,5 +67,18 @@ Program::Program(ShaderPtr vertex, ShaderPtr fragment){
 Program::Program(ShaderPtr compute){
     assert(compute->getType() == COMPUTE_SHADER);
     _Shaders[COMPUTE_SHADER] = compute;
+    _Id = glCreateProgram();
+    if(_Id == 0){
+        ErrorHandler::handle(
+            __FILE__, 
+            __LINE__, 
+            ErrorCode::OPENGL_ERROR,
+            "Failed to create the program!\n"
+        );
+    }
     linkShaders();
+}
+
+bool Program::isInit() const {
+    return _Id != 0;
 }

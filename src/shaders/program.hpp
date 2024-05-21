@@ -12,6 +12,7 @@ class Program{
     public:
         void use();
         void setShader(ShaderPtr shader);
+        bool isInit() const;
 
         // TODO: add other variants
         Program(ShaderPtr vertex, ShaderPtr fragment);

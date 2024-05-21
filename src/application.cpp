@@ -34,6 +34,8 @@ void Application::initWindow(){
         ErrorHandler::glfwError(__FILE__, __LINE__, "Failed to initialize the window!\n");
     }
     glfwMakeContextCurrent(_Window);
+    // bypass 60FPS lock
+    glfwSwapInterval(0);
 }
 
 void Application::quitWindow() const {
@@ -98,10 +100,24 @@ void Application::initRectangleVAO() {
 
     // Generate VAO
     glGenVertexArrays(1, &_RectangleVao);
+    if(_RectangleVao == 0){
+        ErrorHandler::handle(
+            __FILE__, __LINE__, 
+            ErrorCode::OPENGL_ERROR,
+            "Failed to generate the rectangle vao!\n"
+        );
+    }
     glBindVertexArray(_RectangleVao);
 
     // Generate VBO for positions
     glGenBuffers(1, &vboPositions);
+    if(vboPositions == 0){
+        ErrorHandler::handle(
+            __FILE__, __LINE__, 
+            ErrorCode::OPENGL_ERROR,
+            "Failed to generate the rectangle's positions vbo!\n"
+        );
+    }
     glBindBuffer(GL_ARRAY_BUFFER, vboPositions);
     glBufferData(GL_ARRAY_BUFFER, sizeof(POSITIONS), POSITIONS, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
@@ -109,6 +125,13 @@ void Application::initRectangleVAO() {
 
     // Generate VBO for texture coordinates
     glGenBuffers(1, &vboTexCoords);
+    if(vboPositions == 0){
+        ErrorHandler::handle(
+            __FILE__, __LINE__, 
+            ErrorCode::OPENGL_ERROR,
+            "Failed to generate the rectangle's texture coordinates vbo!\n"
+        );
+    }
     glBindBuffer(GL_ARRAY_BUFFER, vboTexCoords);
     glBufferData(GL_ARRAY_BUFFER, sizeof(TEXTURE_COORDS), TEXTURE_COORDS, GL_STATIC_DRAW);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
@@ -119,36 +142,49 @@ void Application::initRectangleVAO() {
 }
 
 void Application::drawOneFrame() const {
-    // use the graphics shaders
-    _RenderingProgram->use();
+    // use the compute shader
+    assert(_ComputeProgram->isInit());
+    _ComputeProgram->use();
+    uint32_t nbGroupsX = _Parameters._ViewportWidth / 10.f;
+    uint32_t nbGroupsY = _Parameters._ViewportHeight / 10.f;
+    uint32_t nbGroupsZ = 1;
+    GLint uniformTimeLocation = 0;
+    float uniformTimeValue = _FPS._LastFrame;
+    glUniform1f(uniformTimeLocation, uniformTimeValue);
+    glDispatchCompute(nbGroupsX, nbGroupsY, nbGroupsZ);
+    glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
-    // create the texture
-    float r = 1.f;
-    float g = 0.f;
-    float b = 0.f;
-    float a = 1.f;
-    GLuint colorTexture = createSolidColorTexture(r,g,b,a); // Red color
-    // matches the binding location in the shader
-    GLuint bindingLocation = 0;
-    glBindTextureUnit(bindingLocation, colorTexture);    
-    
+    // use the graphics shaders
+    assert(_RenderingProgram->isInit());
+    _RenderingProgram->use(); 
+    assert(_RectangleVao != 0);
     glBindVertexArray(_RectangleVao);
+    glActiveTexture(GL_TEXTURE0);
+    assert(_ImageTextureId != 0);
+    glBindTexture(GL_TEXTURE_2D, _ImageTextureId);
+    GLint uniformTextureLocation = 0;
+    GLint uniformTextureValue = 0; // 0 for GL_TEXTURE0
+    glUniform1i(uniformTextureLocation, uniformTextureValue);
     GLint firstIndex = 0;
     GLsizei numberOfIndices = 4;
     glDrawArrays(GL_TRIANGLE_STRIP, firstIndex, numberOfIndices);
     glBindVertexArray(0);
 }
 
-void Application::render() const{
+void Application::render() {
     clearScreen();
     drawOneFrame();
     glfwSwapBuffers(_Window);
+    _FPS.increment();
+    _FPS.display();
 }
 
 void Application::initShaders(){
     ShaderPtr vertexShader = ShaderPtr(new Shader(Shader::SHADER_DIRECTORY + "raytracer.vert", VERTEX_SHADER));
     ShaderPtr fragmentShader = ShaderPtr(new Shader(Shader::SHADER_DIRECTORY + "raytracer.frag", FRAGMENT_SHADER));
     _RenderingProgram = ProgramPtr(new Program(vertexShader, fragmentShader));
+    ShaderPtr computeShader = ShaderPtr(new Shader(Shader::SHADER_DIRECTORY + "raytracer.glsl", COMPUTE_SHADER));
+    _ComputeProgram = ProgramPtr(new Program(computeShader));
 }
 
 void Application::init(){
@@ -158,6 +194,7 @@ void Application::init(){
     initViewport();
     initShaders();
     initRectangleVAO();
+    initTexture();
 }
 
 void Application::run(){
@@ -179,54 +216,64 @@ void Application::mainLoop(){
     }
 }
 
-
-// TODO: to remove
-// Function to create a simple color texture
-GLuint Application::createSolidColorTexture(float r, float g, float b, float a) const {
-    // Define the color data
-    size_t bytesPerPixel = 4;
-    size_t dataSize = _Parameters._ViewportWidth * _Parameters._ViewportWidth * bytesPerPixel;
-    unsigned char* textureData = new unsigned char[dataSize];
-
-    unsigned char red = static_cast<unsigned char>(r * 255);
-    unsigned char green = static_cast<unsigned char>(g * 255);
-    unsigned char blue = static_cast<unsigned char>(b * 255);
-    unsigned char alpha = static_cast<unsigned char>(a * 255);
-
-    // Fill the texture data with the solid color
-    for (size_t i = 0; i < dataSize; i += 4) {
-        textureData[i] = red;
-        textureData[i + 1] = green;
-        textureData[i + 2] = blue;
-        textureData[i + 3] = alpha;
+void Application::initTexture(){
+    glGenTextures(1, &_ImageTextureId);
+    if(_ImageTextureId == 0){
+        ErrorHandler::handle(
+            __FILE__, __LINE__, 
+            ErrorCode::OPENGL_ERROR,
+            "Failed to generate the texture!\n"
+        );
     }
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, _ImageTextureId);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
-    GLuint texture;
-    GLsizei numberOfTextures = 1;
-    glCreateTextures(GL_TEXTURE_2D, numberOfTextures, &texture);
+    GLsizei textureWidth = _Parameters._ViewportWidth;
+    GLsizei textureHeight = _Parameters._ViewportHeight;
+    GLint mipmapLevel = 0;
+    GLint border = 0; // must be 0
+    glTexImage2D(GL_TEXTURE_2D, mipmapLevel, GL_RGBA32F, textureWidth, textureHeight, border, GL_RGBA, GL_FLOAT, nullptr);
 
-    GLsizei numberOfTextureLevels = 1; // for mipmapping
-    glTextureStorage2D(
-        texture, 
-        numberOfTextureLevels, 
-        GL_RGBA8, 
-        _Parameters._ViewportWidth, 
-        _Parameters._ViewportHeight
-    );
+    GLint imageIndex = 0;
+    GLboolean isTextureLayered = GL_FALSE;
+    GLint textureLayer = 0; // no layer
+    GLenum access = GL_READ_ONLY;
+    glBindImageTexture(imageIndex, _ImageTextureId, mipmapLevel, isTextureLayered, textureLayer, access, GL_RGBA32F);
+}
 
-    GLint levelOfDetailNumber = 0; // for mipmapping
-    GLint xOffset = 0;
-    GLint yOffset = 0;
-    glTextureSubImage2D(
-        texture, 
-        levelOfDetailNumber, 
-        xOffset, yOffset, 
-        _Parameters._ViewportWidth, 
-        _Parameters._ViewportHeight, 
-        GL_RGBA, 
-        GL_UNSIGNED_BYTE, 
-        textureData
-    );
 
-    return texture;
+void ApplicationFPS::increment(){
+    float currentFrame = glfwGetTime();
+    float deltaTime = currentFrame - _LastFrame;
+    _LastFrame = currentFrame;
+
+    _SumOfTimes += deltaTime;
+    _FrameCounter++;
+
+    if(deltaTime > _MaxTime) _MaxTime = deltaTime;
+    if(deltaTime < _MinTime) _MinTime = deltaTime;
+}
+
+void ApplicationFPS::display(){
+    if(_FrameCounter >= _NbFramesBetweenDisplay){
+        float avgFPS = 1.f / (_SumOfTimes / static_cast<float>(_FrameCounter));
+        float minFPS = 1.f / _MaxTime;
+        float maxFPS = 1.f / _MinTime;
+
+        _FrameCounter = 0;
+        _SumOfTimes = 0.f;
+        _MinTime = INFINITY;
+        _MaxTime = 0.f;
+        
+        if(_DisplayFPS){
+            fprintf(stdout,
+                "avg FPS: %.2f\nmin FPS: %.2f\nmax FPS: %.2f\n\n", 
+                avgFPS, minFPS, maxFPS
+            );
+        }
+    }
 }

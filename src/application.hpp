@@ -7,6 +7,24 @@
 #include <memory>
 #include <glm/glm.hpp>
 
+struct ApplicationFPS {
+    public:
+        bool _DisplayFPS = true;
+        uint32_t _NbFramesBetweenDisplay = 100;
+        float _LastFrame = 0.f;
+
+    private:
+        uint32_t _FrameCounter = 0;
+        float _SumOfTimes = 0.f;
+        float _MinTime = INFINITY;
+        float _MaxTime = 0.f;
+
+    public:
+        void increment();
+        void display();
+};
+
+
 struct ApplicationParameters {
     uint32_t _OpenglVersionMajor = 4;
     uint32_t _OpenglVersionMinor = 6;
@@ -24,9 +42,13 @@ struct ApplicationParameters {
 class Application {
     private:
         ApplicationParameters _Parameters = {};
+        ApplicationFPS _FPS = {};
+
         GLFWwindow* _Window = nullptr;
         ProgramPtr _RenderingProgram = nullptr;
-        GLuint _RectangleVao;
+        ProgramPtr _ComputeProgram = nullptr;
+        GLuint _RectangleVao = 0;
+        GLuint _ImageTextureId = 0;
 
     private:
         void initGLFW() const;
@@ -49,17 +71,14 @@ class Application {
         void clearScreen() const;
         void drawOneFrame() const;
         void initRectangleVAO();
-        void render() const;
+        void initTexture();
+
+        void render();
 
     public:
         Application(ApplicationParameters parameters = {});
 
     public:
         void run();
-
-    private:
-        // TODO: to remove
-        GLuint createSolidColorTexture(float r, float g, float b, float a) const;
-
 
 };

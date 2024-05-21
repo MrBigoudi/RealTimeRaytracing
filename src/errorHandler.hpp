@@ -20,6 +20,8 @@ enum ErrorCode{
     OPENGL_ERROR,
     IO_ERROR,
     NOT_IMPLEMENTED_ERROR,
+    USAGE_ERROR,
+    BAD_VALUE_ERROR,
 };
 
 /**
