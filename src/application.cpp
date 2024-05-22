@@ -6,6 +6,12 @@ Application::Application(ApplicationParameters parameters){
     _Parameters = parameters;
 }
 
+void Application::initCamera() {
+    float aspectRatio = static_cast<float>(_Parameters._ViewportWidth) / static_cast<float>(_Parameters._ViewportHeight);
+    glm::vec3 position = glm::vec3(0.f, 0.f, -5.f);
+    _Camera = CameraPtr(new Camera(position, aspectRatio));
+}
+
 void Application::initGLFW() const {
     if(glfwInit() != GLFW_TRUE){
         ErrorHandler::glfwError(__FILE__, __LINE__, "Failed to initialize GLFW!\n");
@@ -148,9 +154,16 @@ void Application::drawOneFrame() const {
     uint32_t nbGroupsX = _Parameters._ViewportWidth / 10.f;
     uint32_t nbGroupsY = _Parameters._ViewportHeight / 10.f;
     uint32_t nbGroupsZ = 1;
-    GLint uniformTimeLocation = 0;
     float uniformTimeValue = _FPS._LastFrame;
-    glUniform1f(uniformTimeLocation, uniformTimeValue);
+    _ComputeProgram->setFloat("uTime", uniformTimeValue);
+    // send camera data
+    CameraGPU cameraDataToSend = _Camera->getGpuData();
+    _ComputeProgram->setMat4("uCamera._View", cameraDataToSend._View);
+    _ComputeProgram->setMat4("uCamera._Proj", cameraDataToSend._Proj);
+    _ComputeProgram->setVec4("uCamera._Eye", cameraDataToSend._Eye);
+    _ComputeProgram->setFloat("uCamera._PlaneWidth", cameraDataToSend._PlaneWidth);
+    _ComputeProgram->setFloat("uCamera._PlaneHeight", cameraDataToSend._PlaneHeight);
+
     glDispatchCompute(nbGroupsX, nbGroupsY, nbGroupsZ);
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
@@ -162,9 +175,8 @@ void Application::drawOneFrame() const {
     glActiveTexture(GL_TEXTURE0);
     assert(_ImageTextureId != 0);
     glBindTexture(GL_TEXTURE_2D, _ImageTextureId);
-    GLint uniformTextureLocation = 0;
     GLint uniformTextureValue = 0; // 0 for GL_TEXTURE0
-    glUniform1i(uniformTextureLocation, uniformTextureValue);
+    _RenderingProgram->setInt("uRaytracedTexture", uniformTextureValue);
     GLint firstIndex = 0;
     GLsizei numberOfIndices = 4;
     glDrawArrays(GL_TRIANGLE_STRIP, firstIndex, numberOfIndices);
@@ -195,6 +207,7 @@ void Application::init(){
     initShaders();
     initRectangleVAO();
     initTexture();
+    initCamera();
 }
 
 void Application::run(){

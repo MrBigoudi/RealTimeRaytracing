@@ -2,9 +2,10 @@
 
 #include <algorithm>
 #include <cassert>
+#include <glm/ext.hpp>
 #include "errorHandler.hpp"
 
-void Program::use(){
+void Program::use() const {
     glUseProgram(_Id);
 }
 
@@ -82,3 +83,47 @@ Program::Program(ShaderPtr compute){
 bool Program::isInit() const {
     return _Id != 0;
 }
+
+GLuint Program::getLocation(const std::string & name) const { 
+    use(); 
+    return glGetUniformLocation(_Id, name.c_str()); 
+}
+
+void Program::setBool(const std::string & name, bool value) const { 
+    use(); 
+    glUniform1i(getLocation(name.c_str()), value ? 1 : 0); 
+}
+
+void Program::setFloat(const std::string & name, float value) const { 
+    use(); 
+    glUniform1f(getLocation(name.c_str()), value); 
+}
+
+void Program::setInt(const std::string & name, int value) const { 
+    use(); 
+    glUniform1i(getLocation(name.c_str()), value); 
+}
+
+void Program::setUInt(const std::string & name, unsigned int value) const { 
+    use(); 
+    glUniform1i(getLocation(name.c_str()), int(value)); 
+}
+
+void Program::setVec2(const std::string & name, const glm::vec2 & value) const { 
+    use(); 
+    glUniform2fv(getLocation(name.c_str()), 1, glm::value_ptr(value)); 
+}
+
+void Program::setVec3(const std::string & name, const glm::vec3 & value) const { 
+    use(); 
+    glUniform3fv(getLocation(name.c_str()), 1, glm::value_ptr(value)); 
+}
+
+void Program::setVec4(const std::string & name, const glm::vec4 & value) const { 
+    use(); 
+    glUniform4fv(getLocation(name.c_str()), 1, glm::value_ptr(value)); 
+}
+
+void Program::setMat4(const std::string & name, const glm::mat4 & value) const { 
+    use(); 
+    glUniformMatrix4fv(getLocation(name.c_str()), 1, GL_FALSE, glm::value_ptr(value)); }
