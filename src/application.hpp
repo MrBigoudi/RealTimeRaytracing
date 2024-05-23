@@ -64,6 +64,7 @@ class Application {
         void initCamera();
 
         void initShaders();
+        void initCallbacks();
 
         void init();
         void quit() const;
@@ -80,6 +81,7 @@ class Application {
 
     public:
         Application(ApplicationParameters parameters = {});
+        CameraPtr getCamera() const;
 
     public:
         void run();

@@ -1,3 +1,3 @@
 # Todo list
 
-- test rotating camera
+- create a Hit structure in GPU

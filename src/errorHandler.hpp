@@ -22,6 +22,7 @@ enum ErrorCode{
     NOT_IMPLEMENTED_ERROR,
     USAGE_ERROR,
     BAD_VALUE_ERROR,
+    NOT_INITIALIZED_ERROR,
 };
 
 /**

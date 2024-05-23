@@ -1,5 +1,6 @@
 #include "application.hpp"
 #include "errorHandler.hpp"
+#include "input.hpp"
 #include "shader.hpp"
 
 Application::Application(ApplicationParameters parameters){
@@ -39,7 +40,20 @@ void Application::initWindow(){
     if(_Window == nullptr){
         ErrorHandler::glfwError(__FILE__, __LINE__, "Failed to initialize the window!\n");
     }
+    // center window
+    const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+    int screenWidth = mode->width;
+    int screenHeight = mode->height;
+    int windowXPos = (screenWidth - _Parameters._WindowWidth) / 2;
+    int windowYPos = (screenHeight - _Parameters._WindowHeight) / 2;
+    glfwSetWindowPos(_Window, windowXPos, windowYPos);
+
     glfwMakeContextCurrent(_Window);
+
+    // display cursor
+    glfwSetInputMode(_Window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetWindowUserPointer(_Window, this);
+
     // bypass 60FPS lock
     glfwSwapInterval(0);
 }
@@ -67,6 +81,10 @@ void Application::initViewport() const {
         _Parameters._ViewportWidth, 
         _Parameters._ViewportHeight
     );
+}
+
+void Application::initCallbacks() {
+    glfwSetCursorPosCallback(_Window, Input::mouseCallback);
 }
 
 void Application::processInput() const {
@@ -147,6 +165,19 @@ void Application::initRectangleVAO() {
     glBindVertexArray(0);
 }
 
+CameraPtr Application::getCamera() const{
+    if(!_Camera){
+        ErrorHandler::handle(
+            __FILE__, 
+            __LINE__, 
+            ErrorCode::NOT_INITIALIZED_ERROR,
+            "Can't access an unitilialized camera!\n"
+        );
+    }
+    return _Camera;
+}
+
+
 void Application::drawOneFrame() const {
     // use the compute shader
     assert(_ComputeProgram->isInit());
@@ -157,6 +188,7 @@ void Application::drawOneFrame() const {
     float uniformTimeValue = _FPS._LastFrame;
     _ComputeProgram->setFloat("uTime", uniformTimeValue);
     // send camera data
+    assert(_Camera);
     CameraGPU cameraDataToSend = _Camera->getGpuData();
     _ComputeProgram->setMat4("uCamera._View", cameraDataToSend._View);
     _ComputeProgram->setMat4("uCamera._Proj", cameraDataToSend._Proj);
@@ -211,6 +243,7 @@ void Application::init(){
     initRectangleVAO();
     initTexture();
     initCamera();
+    initCallbacks();
 }
 
 void Application::run(){
