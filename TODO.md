@@ -1,3 +1,3 @@
 # Todo list
 
-- create a material in the GPU
+- send triangles / materials from CPU to GPU

@@ -19,9 +19,15 @@ struct Ray {
 
 struct Triangle {
     uint _Id;
+    uint _MaterialId;
     vec3 _P0;
     vec3 _P2;
     vec3 _P1;
+};
+
+struct Material {
+    uint _Id;
+    vec3 _Color;
 };
 
 struct Hit {
@@ -32,6 +38,9 @@ struct Hit {
 };
 
 
+// constants
+const uint MAX_NB_TRIANGLES = 8;//2 << 15;
+const uint MAX_NB_MATERIALS = 8; //2 << 10;
 
 // output
 layout(rgba32f, binding = 0) uniform image2D oImage;
@@ -93,26 +102,79 @@ Hit rayTriangleIntersection(Ray ray, Triangle triangle){
     return hit;
 }
 
+void getAllHits(Ray ray, uint nbTriangles, Triangle[MAX_NB_TRIANGLES] triangles, inout Hit closestHit){
+    for(uint i=0; i<nbTriangles; i++){
+        Triangle curTriangle = triangles[i];
+        Hit curHit = rayTriangleIntersection(ray, curTriangle);
+        if(curHit._DidHit == 0) continue;
+        if(closestHit._DidHit == 0 || curHit._DistToOrigin < closestHit._DistToOrigin){
+            closestHit = curHit;
+        }
+    }
+}
+
+void getColor(Material[MAX_NB_MATERIALS] materials, Triangle[MAX_NB_TRIANGLES] triangles, Hit hit, inout vec3 color){
+    if(hit._DidHit == 0) return;
+    color = materials[triangles[hit._TriangleId]._MaterialId]._Color;
+}
+
+
 // temporary
-const Triangle SHARED_TRIANGLE = {
+const Material SHARED_MATERIAL_0 = {
     0,
+    vec3(0.2, 0.3, 0.1),
+};
+
+const Material SHARED_MATERIAL_1 = {
+    1,
+    vec3(0., 0., 1.),
+};
+
+const Triangle SHARED_TRIANGLE_0 = {
+    0,
+    SHARED_MATERIAL_0._Id,
     vec3(-1, -1, 1),
     vec3(1, -1, 1),
     vec3(0, 1, 1),
 };
 
+const Triangle SHARED_TRIANGLE_1 = {
+    1,
+    SHARED_MATERIAL_1._Id,
+    vec3(-2, 0, 2),
+    vec3(5, 0, 0),
+    vec3(0, 2, 0),
+};
+
+
+// main
 void main() {
     vec4 value = vec4(0.f, 0.f, 0.f, 1.f);
     ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy);
 
     vec2 pixelPos = vec2(0.f);
     pixelPos.x = float(texelCoord.x) / (gl_NumWorkGroups.x * gl_WorkGroupSize.x);
-    pixelPos.y = float(texelCoord.y)/(gl_NumWorkGroups.y * gl_WorkGroupSize.y);
+    pixelPos.y = float(texelCoord.y) / (gl_NumWorkGroups.y * gl_WorkGroupSize.y);
 
     Ray ray = getRay(pixelPos);
-    Hit hit = rayTriangleIntersection(ray, SHARED_TRIANGLE);
+    Material[MAX_NB_MATERIALS] materials;
+    uint nbMaterials = 0;
+    Triangle[MAX_NB_TRIANGLES] triangles;
+    uint nbTriangles = 0;
 
-    value.xyz = hit._DidHit != 0 ? vec3(1.f) : value.xyz;
+    // adding elements to the lists
+    materials[0] = SHARED_MATERIAL_0;
+    materials[1] = SHARED_MATERIAL_1;
+    nbMaterials += 2;
+    triangles[0] = SHARED_TRIANGLE_0;
+    triangles[1] = SHARED_TRIANGLE_1;
+    nbTriangles += 2;
+
+    Hit closestHit;
+    closestHit._DidHit = 0;
+    getAllHits(ray, nbTriangles, triangles, closestHit);
+
+    getColor(materials, triangles, closestHit, value.xyz);
 
     imageStore(oImage, texelCoord, value);
 }
