@@ -22,9 +22,12 @@ CameraGPU Camera::getGpuData() const {
     CameraGPU camera{};
     camera._View = getView();
     camera._Proj = getPerspective();
+    camera._InvView = glm::inverse(camera._View);
+    camera._InvProj = glm::inverse(camera._Proj);
     camera._Eye = glm::vec4(getPosition(), 1.f);
     camera._PlaneHeight = getPlaneHeight();
     camera._PlaneWidth = getPlaneWidth(camera._PlaneHeight);
+    camera._PlaneNear = _Near;
     return camera;
 }
 

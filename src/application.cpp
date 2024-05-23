@@ -88,10 +88,10 @@ void Application::clearScreen() const {
 void Application::initRectangleVAO() {
     // hard coded quad positions
     const GLfloat POSITIONS[] = {
-        -1.f, -1.f,
-        1.f, -1.f,
         -1.f, 1.f,
-        1.f, 1.f
+        1.f, 1.f,
+        -1.f, -1.f,
+        1.f, -1.f
     };
 
     // hard coded quad texture coords
@@ -160,9 +160,12 @@ void Application::drawOneFrame() const {
     CameraGPU cameraDataToSend = _Camera->getGpuData();
     _ComputeProgram->setMat4("uCamera._View", cameraDataToSend._View);
     _ComputeProgram->setMat4("uCamera._Proj", cameraDataToSend._Proj);
+    _ComputeProgram->setMat4("uCamera._InvView", cameraDataToSend._InvView);
+    _ComputeProgram->setMat4("uCamera._InvProj", cameraDataToSend._InvProj);
     _ComputeProgram->setVec4("uCamera._Eye", cameraDataToSend._Eye);
     _ComputeProgram->setFloat("uCamera._PlaneWidth", cameraDataToSend._PlaneWidth);
     _ComputeProgram->setFloat("uCamera._PlaneHeight", cameraDataToSend._PlaneHeight);
+    _ComputeProgram->setFloat("uCamera._PlaneNear", cameraDataToSend._PlaneNear);
 
     glDispatchCompute(nbGroupsX, nbGroupsY, nbGroupsZ);
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);

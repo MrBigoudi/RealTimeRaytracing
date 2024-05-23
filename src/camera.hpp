@@ -20,9 +20,12 @@ enum CameraMovement {
 struct CameraGPU{
     glm::mat4 _View;
     glm::mat4 _Proj;
+    glm::mat4 _InvView;
+    glm::mat4 _InvProj;
     glm::vec4 _Eye;
     float _PlaneWidth;
     float _PlaneHeight;
+    float _PlaneNear;
 };
 
 class Camera;

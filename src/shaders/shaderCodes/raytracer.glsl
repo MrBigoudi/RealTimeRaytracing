@@ -4,9 +4,17 @@
 struct Camera {
     mat4 _View;
     mat4 _Proj;
+    mat4 _InvView;
+    mat4 _InvProj;
     vec4 _Eye;
     float _PlaneWidth;
     float _PlaneHeight;
+    float _PlaneNear;
+};
+
+struct Ray {
+    vec3 _Origin;
+    vec3 _Direction;
 };
 
 // output
@@ -19,14 +27,27 @@ layout (location = 1) uniform Camera uCamera;
 
 
 // code
-void main() {
-    vec4 value = vec4(0.0, 0.0, 0.0, 1.0);
-    ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy);
-    float speed = 100;
-    float width = 1000;
-    float rd = sin(uTime*(uCamera._View[0][0] + uCamera._PlaneWidth * uCamera._PlaneHeight));
 
-    value.x = mod(float(texelCoord.x) + uTime * speed, width) / (gl_NumWorkGroups.x * gl_WorkGroupSize.x);
-    value.y = float(texelCoord.y)/(gl_NumWorkGroups.y * gl_WorkGroupSize.y);
-    imageStore(oImage, texelCoord, rd*value);
+Ray getRay(vec2 pos){ // pos between 0 and 1
+    Ray ray;
+    ray._Origin = uCamera._Eye.xyz;
+    vec3 posViewSpace =  vec3(pos - 0.5f, 1.f) * vec3(uCamera._PlaneWidth, uCamera._PlaneHeight, uCamera._PlaneNear);
+    vec3 posWorldSpace = (uCamera._InvView * vec4(posViewSpace, 1.f)).xyz;
+    ray._Direction = normalize(posWorldSpace - ray._Origin);
+    return ray;
+}
+
+void main() {
+    vec4 value = vec4(0.f, 0.f, 0.f, 1.f);
+    ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy);
+
+    vec2 pixelPos = vec2(0.f);
+    pixelPos.x = float(texelCoord.x) / (gl_NumWorkGroups.x * gl_WorkGroupSize.x);
+    pixelPos.y = float(texelCoord.y)/(gl_NumWorkGroups.y * gl_WorkGroupSize.y);
+
+    Ray ray = getRay(pixelPos);
+
+    value.xyz = ray._Direction;
+
+    imageStore(oImage, texelCoord, value);
 }
