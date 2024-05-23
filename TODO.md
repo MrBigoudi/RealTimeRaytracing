@@ -1,3 +1,3 @@
 # Todo list
 
-- create a Hit structure in GPU
+- create a material in the GPU
