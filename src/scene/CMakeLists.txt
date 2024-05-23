@@ -1,6 +1,6 @@
-file(GLOB SOURCE_FILES "*.cpp")
+file(GLOB SCENE_SOURCE_FILES "*.cpp")
 
-target_sources(${PROJECT_NAME} PUBLIC ${SOURCE_FILES})
+target_sources(${PROJECT_NAME} PUBLIC ${SCENE_SOURCE_FILES})
 
 target_include_directories(${PROJECT_NAME} 
     PUBLIC
@@ -9,6 +9,5 @@ target_include_directories(${PROJECT_NAME}
     PRIVATE
 )
 
-add_subdirectory(core)
-add_subdirectory(scene)
-add_subdirectory(shaders)
+add_subdirectory(geometry)
+add_subdirectory(pbr)

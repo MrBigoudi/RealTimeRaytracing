@@ -13,27 +13,26 @@ struct Camera {
 };
 
 struct Ray {
-    vec3 _Origin;
-    vec3 _Direction;
+    vec4 _Origin;
+    vec4 _Direction;
 };
 
 struct Triangle {
     uint _Id;
     uint _MaterialId;
-    vec3 _P0;
-    vec3 _P2;
-    vec3 _P1;
+    vec4 _P0;
+    vec4 _P2;
+    vec4 _P1;
 };
 
 struct Material {
     uint _Id;
-    vec3 _Color;
+    vec4 _Color;
 };
 
 struct Hit {
     uint _DidHit;
-    vec3 _BarycentricCoords;
-    float _DistToOrigin;
+    vec4 _Coords; // (b0, b1, b2, t)
     uint _TriangleId;
 };
 
@@ -55,36 +54,37 @@ layout (location = 1) uniform Camera uCamera;
 
 Ray getRay(vec2 pos){ // pos between 0 and 1
     Ray ray;
-    ray._Origin = uCamera._Eye.xyz;
+    ray._Origin = uCamera._Eye;
     vec3 posViewSpace =  vec3(pos - 0.5f, 1.f) * vec3(uCamera._PlaneWidth, uCamera._PlaneHeight, uCamera._PlaneNear);
-    vec3 posWorldSpace = (uCamera._InvView * vec4(posViewSpace, 1.f)).xyz;
+    vec4 posWorldSpace = uCamera._InvView * vec4(posViewSpace, 1.f);
     ray._Direction = normalize(posWorldSpace - ray._Origin);
+    ray._Direction.w = 0.;
     return ray;
 }
 
 Hit rayTriangleIntersection(Ray ray, Triangle triangle){
     Hit hit;
-    vec3 triEdge0 = triangle._P1 - triangle._P0;
-    vec3 triEdge1 = triangle._P2 - triangle._P0;
+    vec3 triEdge0 = triangle._P1.xyz - triangle._P0.xyz;
+    vec3 triEdge1 = triangle._P2.xyz - triangle._P0.xyz;
     vec3 triNormale = normalize(cross(triEdge0, triEdge1));
 
-    vec3 q = cross(ray._Direction, triEdge1);
+    vec3 q = cross(ray._Direction.xyz, triEdge1);
     float a = dot(triEdge0, q);
     float epsilon = 1e-4;
 
-    if(dot(triNormale, ray._Direction) >= 0 || abs(a) < epsilon){
+    if(dot(triNormale, ray._Direction.xyz) >= 0 || abs(a) < epsilon){
         hit._DidHit = 0;
         return hit;
     }
 
-    vec3 s = (ray._Origin - triangle._P0) / a;
-    vec3 r = cross(s, triEdge0);
+    vec4 s = (ray._Origin - triangle._P0) / a;
+    vec3 r = cross(s.xyz, triEdge0);
 
-    hit._BarycentricCoords.x = dot(s, q);
-    hit._BarycentricCoords.y = dot(r, ray._Direction);
-    hit._BarycentricCoords.z = 1 - hit._BarycentricCoords.x - hit._BarycentricCoords.y;
+    hit._Coords.x = dot(s.xyz, q);
+    hit._Coords.y = dot(r, ray._Direction.xyz);
+    hit._Coords.z = 1 - hit._Coords.x - hit._Coords.y;
 
-    if(hit._BarycentricCoords.x < 0 || hit._BarycentricCoords.y < 0 || hit._BarycentricCoords.z < 0){
+    if(hit._Coords.x < 0 || hit._Coords.y < 0 || hit._Coords.z < 0){
         hit._DidHit = 0;
         return hit;
     }
@@ -96,7 +96,7 @@ Hit rayTriangleIntersection(Ray ray, Triangle triangle){
     }
 
     hit._DidHit = 1;
-    hit._DistToOrigin = t;
+    hit._Coords.w = t;
     hit._TriangleId = triangle._Id;
 
     return hit;
@@ -107,13 +107,13 @@ void getAllHits(Ray ray, uint nbTriangles, Triangle[MAX_NB_TRIANGLES] triangles,
         Triangle curTriangle = triangles[i];
         Hit curHit = rayTriangleIntersection(ray, curTriangle);
         if(curHit._DidHit == 0) continue;
-        if(closestHit._DidHit == 0 || curHit._DistToOrigin < closestHit._DistToOrigin){
+        if(closestHit._DidHit == 0 || curHit._Coords.w < closestHit._Coords.w){
             closestHit = curHit;
         }
     }
 }
 
-void getColor(Material[MAX_NB_MATERIALS] materials, Triangle[MAX_NB_TRIANGLES] triangles, Hit hit, inout vec3 color){
+void getColor(Material[MAX_NB_MATERIALS] materials, Triangle[MAX_NB_TRIANGLES] triangles, Hit hit, inout vec4 color){
     if(hit._DidHit == 0) return;
     color = materials[triangles[hit._TriangleId]._MaterialId]._Color;
 }
@@ -122,28 +122,28 @@ void getColor(Material[MAX_NB_MATERIALS] materials, Triangle[MAX_NB_TRIANGLES] t
 // temporary
 const Material SHARED_MATERIAL_0 = {
     0,
-    vec3(0.2, 0.3, 0.1),
+    vec4(0.2, 0.3, 0.1, 1.),
 };
 
 const Material SHARED_MATERIAL_1 = {
     1,
-    vec3(0., 0., 1.),
+    vec4(0., 0., 1., 1.),
 };
 
 const Triangle SHARED_TRIANGLE_0 = {
     0,
     SHARED_MATERIAL_0._Id,
-    vec3(-1, -1, 1),
-    vec3(1, -1, 1),
-    vec3(0, 1, 1),
+    vec4(-1, -1, 1, 1),
+    vec4(1, -1, 1, 1),
+    vec4(0, 1, 1, 1),
 };
 
 const Triangle SHARED_TRIANGLE_1 = {
     1,
     SHARED_MATERIAL_1._Id,
-    vec3(-2, 0, 2),
-    vec3(5, 0, 0),
-    vec3(0, 2, 0),
+    vec4(-2, 0, 2, 1),
+    vec4(5, 0, 0, 1),
+    vec4(0, 2, 0, 1),
 };
 
 
@@ -174,7 +174,7 @@ void main() {
     closestHit._DidHit = 0;
     getAllHits(ray, nbTriangles, triangles, closestHit);
 
-    getColor(materials, triangles, closestHit, value.xyz);
+    getColor(materials, triangles, closestHit, value);
 
     imageStore(oImage, texelCoord, value);
 }
