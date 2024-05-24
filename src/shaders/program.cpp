@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cassert>
 #include <glm/ext.hpp>
+#include <vector>
 #include "errorHandler.hpp"
 
 void Program::use() const {
@@ -33,17 +34,24 @@ void Program::linkShaders() const {
     });
 
     int success;
-    char infoLog[512];
 
     glLinkProgram(id);
     glGetProgramiv(id, GL_LINK_STATUS, &success);
     if(!success){
-        glGetShaderInfoLog(id, 512, NULL, infoLog);
+        GLint maxLength = 0;
+        glGetProgramiv(_Id, GL_INFO_LOG_LENGTH, &maxLength);
+        // The maxLength includes the NULL character
+        std::vector<GLchar> infoLog(maxLength);
+        glGetProgramInfoLog(_Id, maxLength, &maxLength, &infoLog[0]);
+        // The program is useless now. So delete it.
+        glDeleteProgram(_Id);
+        
+        std::string errorMessage(infoLog.begin(), infoLog.end());
         ErrorHandler::handle(
             __FILE__,
             __LINE__,
             ErrorCode::OPENGL_ERROR,
-            "Failed to link the shaders!\n"
+            "Failed to link the shaders: " + errorMessage + "!\n"
         );
     };
 }
@@ -126,4 +134,9 @@ void Program::setVec4(const std::string & name, const glm::vec4 & value) const {
 
 void Program::setMat4(const std::string & name, const glm::mat4 & value) const { 
     use(); 
-    glUniformMatrix4fv(getLocation(name.c_str()), 1, GL_FALSE, glm::value_ptr(value)); }
+    glUniformMatrix4fv(getLocation(name.c_str()), 1, GL_FALSE, glm::value_ptr(value)); 
+}
+
+GLuint Program::getId() const{
+    return _Id;
+}

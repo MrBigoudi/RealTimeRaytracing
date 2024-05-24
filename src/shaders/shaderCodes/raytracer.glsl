@@ -18,40 +18,47 @@ struct Ray {
 };
 
 struct Triangle {
-    uint _Id;
-    uint _MaterialId;
     vec4 _P0;
     vec4 _P2;
     vec4 _P1;
+    uint _Id;
+    uint _MaterialId;
 };
 
 struct Material {
-    uint _Id;
     vec4 _Color;
+    uint _Id;
 };
 
 struct Hit {
-    uint _DidHit;
     vec4 _Coords; // (b0, b1, b2, t)
+    uint _DidHit;
     uint _TriangleId;
 };
 
 
 // constants
-const uint MAX_NB_TRIANGLES = 8;//2 << 15;
-const uint MAX_NB_MATERIALS = 8; //2 << 10;
+const uint MAX_NB_TRIANGLES = 2;//2 << 15;
+const uint MAX_NB_MATERIALS = 2; //2 << 10;
 
 // output
 layout(rgba32f, binding = 0) uniform image2D oImage;
 
 // input
 layout(local_size_x = 10, local_size_y = 10, local_size_z = 1) in;
-layout (location = 0) uniform float uTime;
-layout (location = 1) uniform Camera uCamera;
+
+uniform float uTime;
+uniform Camera uCamera;
+uniform int uNbMaterials;
+uniform int uNbTriangles;
+
+layout (binding = 0, std140) uniform uGeometryData {
+    Triangle uTriangles[MAX_NB_TRIANGLES];
+    Material uMaterials[MAX_NB_MATERIALS];
+};
 
 
 // code
-
 Ray getRay(vec2 pos){ // pos between 0 and 1
     Ray ray;
     ray._Origin = uCamera._Eye;
@@ -119,33 +126,6 @@ void getColor(Material[MAX_NB_MATERIALS] materials, Triangle[MAX_NB_TRIANGLES] t
 }
 
 
-// temporary
-const Material SHARED_MATERIAL_0 = {
-    0,
-    vec4(0.2, 0.3, 0.1, 1.),
-};
-
-const Material SHARED_MATERIAL_1 = {
-    1,
-    vec4(0., 0., 1., 1.),
-};
-
-const Triangle SHARED_TRIANGLE_0 = {
-    0,
-    SHARED_MATERIAL_0._Id,
-    vec4(-1, -1, 1, 1),
-    vec4(1, -1, 1, 1),
-    vec4(0, 1, 1, 1),
-};
-
-const Triangle SHARED_TRIANGLE_1 = {
-    1,
-    SHARED_MATERIAL_1._Id,
-    vec4(-2, 0, 2, 1),
-    vec4(5, 0, 0, 1),
-    vec4(0, 2, 0, 1),
-};
-
 
 // main
 void main() {
@@ -157,24 +137,12 @@ void main() {
     pixelPos.y = float(texelCoord.y) / (gl_NumWorkGroups.y * gl_WorkGroupSize.y);
 
     Ray ray = getRay(pixelPos);
-    Material[MAX_NB_MATERIALS] materials;
-    uint nbMaterials = 0;
-    Triangle[MAX_NB_TRIANGLES] triangles;
-    uint nbTriangles = 0;
-
-    // adding elements to the lists
-    materials[0] = SHARED_MATERIAL_0;
-    materials[1] = SHARED_MATERIAL_1;
-    nbMaterials += 2;
-    triangles[0] = SHARED_TRIANGLE_0;
-    triangles[1] = SHARED_TRIANGLE_1;
-    nbTriangles += 2;
 
     Hit closestHit;
     closestHit._DidHit = 0;
-    getAllHits(ray, nbTriangles, triangles, closestHit);
+    getAllHits(ray, uNbTriangles, uTriangles, closestHit);
 
-    getColor(materials, triangles, closestHit, value);
+    getColor(uMaterials, uTriangles, closestHit, value);
 
     imageStore(oImage, texelCoord, value);
 }

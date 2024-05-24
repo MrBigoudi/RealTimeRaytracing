@@ -7,6 +7,7 @@
 #include <memory>
 #include <glm/glm.hpp>
 #include "camera.hpp"
+#include "scene.hpp"
 
 struct ApplicationFPS {
     public:
@@ -51,6 +52,7 @@ class Application {
         GLuint _RectangleVao = 0;
         GLuint _ImageTextureId = 0;
         CameraPtr _Camera = nullptr;
+        ScenePtr _Scene = nullptr;
 
     private:
         void initGLFW() const;
@@ -65,6 +67,7 @@ class Application {
 
         void initShaders();
         void initCallbacks();
+        void initScene();
 
         void init();
         void quit() const;

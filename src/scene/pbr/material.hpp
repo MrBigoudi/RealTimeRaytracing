@@ -3,15 +3,18 @@
 #include <cstdint>
 #include <glm/glm.hpp>
 
-#define MAX_NB_MATERIALS 8 // should match raytracer.glsl
+#define MAX_NB_MATERIALS 2 // should match raytracer.glsl
 
 
 struct MaterialGPU{
-    uint32_t _Id;
     glm::vec4 _Color;
+    alignas(16) uint32_t _Id;
 };
 
 class Material{
     public:
         MaterialGPU _InternalStruct{};
+
+    public:
+        Material(uint32_t id, const glm::vec4& color);
 };

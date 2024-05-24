@@ -165,6 +165,14 @@ void Application::initRectangleVAO() {
     glBindVertexArray(0);
 }
 
+void Application::initScene() {
+    _Scene = ScenePtr(new Scene());
+    _Scene->addMaterial({0.2, 0.3, 0.1, 1.});
+    _Scene->addMaterial({0., 0., 1., 1.});
+    _Scene->addTriangle(0, {-1,-1,1,1}, {1,-1,1,1}, {0,1,1,1});
+    _Scene->addTriangle(1, {-2,0,2,1}, {5,0,0,1}, {0,2,0,1});
+}
+
 CameraPtr Application::getCamera() const{
     if(!_Camera){
         ErrorHandler::handle(
@@ -244,6 +252,9 @@ void Application::init(){
     initTexture();
     initCamera();
     initCallbacks();
+    initScene();
+    // static scene for now
+    _Scene->sendDataToGpu(_ComputeProgram);
 }
 
 void Application::run(){
