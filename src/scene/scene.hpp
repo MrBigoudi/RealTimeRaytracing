@@ -27,7 +27,9 @@ class Scene{
         std::array<MaterialGPU, MAX_NB_MATERIALS> getMaterialToGPUData() const;
 
         void addTriangle(uint32_t materialId, const glm::vec4& p0, const glm::vec4& p1, const glm::vec4& p2);
+        void addRandomTriangle();
         void addMaterial(const glm::vec4& color);
+        void addRandomMaterial();
 
         void sendDataToGpu(ProgramPtr program);
 

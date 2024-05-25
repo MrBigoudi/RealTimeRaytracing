@@ -38,8 +38,8 @@ struct Hit {
 
 
 // constants
-const uint MAX_NB_TRIANGLES = 2;//2 << 15;
-const uint MAX_NB_MATERIALS = 2; //2 << 10;
+const uint MAX_NB_TRIANGLES = 128;//2 << 15;
+const uint MAX_NB_MATERIALS = 8; //2 << 10;
 
 // output
 layout(rgba32f, binding = 0) uniform image2D oImage;

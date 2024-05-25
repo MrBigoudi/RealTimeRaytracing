@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <glm/glm.hpp>
 
-#define MAX_NB_TRIANGLES 2 // should match raytracer.glsl
+#define MAX_NB_TRIANGLES 128 // should match raytracer.glsl
 
 struct TriangleGPU{
     glm::vec4 _P0;
@@ -19,4 +19,5 @@ class Triangle{
 
     public:
         Triangle(uint32_t id, uint32_t materialId, const glm::vec4& p0, const glm::vec4& p1, const glm::vec4& p2);
+        Triangle(uint32_t id, uint32_t materialId);
 };

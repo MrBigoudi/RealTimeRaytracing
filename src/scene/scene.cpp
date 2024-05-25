@@ -28,11 +28,24 @@ void Scene::addTriangle(uint32_t materialId, const glm::vec4& p0, const glm::vec
     _Triangles.emplace_back(triangleId, materialId, p0, p1, p2);
 }
 
+void Scene::addRandomTriangle(){
+    uint32_t materialId = rand()%_Materials.size();
+    if(_Triangles.size() == MAX_NB_TRIANGLES) return;
+    uint32_t triangleId = _Triangles.size();
+    _Triangles.emplace_back(triangleId, materialId);
+}
+
 void Scene::addMaterial(const glm::vec4& color){
     // TODO: better handling
     if(_Materials.size() == MAX_NB_MATERIALS) return;
     uint32_t materialId = _Materials.size();
     _Materials.emplace_back(materialId, color);
+}
+
+void Scene::addRandomMaterial(){
+    if(_Materials.size() == MAX_NB_MATERIALS) return;
+    uint32_t materialId = _Materials.size();
+    _Materials.emplace_back(materialId);
 }
 
 void Scene::createUBO(){

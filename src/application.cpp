@@ -171,6 +171,12 @@ void Application::initScene() {
     _Scene->addMaterial({0., 0., 1., 1.});
     _Scene->addTriangle(0, {-1,-1,1,1}, {1,-1,1,1}, {0,1,1,1});
     _Scene->addTriangle(1, {-2,0,2,1}, {5,0,0,1}, {0,2,0,1});
+    // for(size_t i=0; i<MAX_NB_MATERIALS; i++){
+    //     _Scene->addRandomMaterial();
+    // }
+    // for(size_t i=0; i<MAX_NB_TRIANGLES; i++){
+    //     _Scene->addRandomTriangle();
+    // }
 }
 
 CameraPtr Application::getCamera() const{
