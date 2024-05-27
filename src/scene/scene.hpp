@@ -6,6 +6,7 @@
 #include "program.hpp"
 #include "triangle.hpp"
 #include "material.hpp"
+#include <glad/gl.h>
 
 #include <memory>
 
@@ -18,6 +19,8 @@ class Scene{
         uint32_t _MaterialIdGenerator = 0;
         std::vector<Triangle> _Triangles = {};
         std::vector<Material> _Materials = {};
+        GLuint _TrianglesSSBO = 0;
+        GLuint _MaterialsSSBO = 0;
 
     public:
         Scene();
@@ -34,5 +37,6 @@ class Scene{
         void sendDataToGpu(ProgramPtr program);
 
     private:
-        void createUBO();
+        void createSSBO();
+        void bindSSBO();
 };

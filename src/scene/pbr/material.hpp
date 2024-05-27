@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <glm/glm.hpp>
 
-#define MAX_NB_MATERIALS 8 // should match raytracer.glsl
+#define MAX_NB_MATERIALS 2<<15
 
 
 struct MaterialGPU{

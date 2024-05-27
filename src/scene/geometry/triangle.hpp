@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <glm/glm.hpp>
 
-#define MAX_NB_TRIANGLES 128 // should match raytracer.glsl
+#define MAX_NB_TRIANGLES 2<<10
 
 struct TriangleGPU{
     glm::vec4 _P0;

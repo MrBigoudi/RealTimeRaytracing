@@ -36,11 +36,6 @@ struct Hit {
     uint _TriangleId;
 };
 
-
-// constants
-const uint MAX_NB_TRIANGLES = 128;//2 << 15;
-const uint MAX_NB_MATERIALS = 8; //2 << 10;
-
 // output
 layout(rgba32f, binding = 0) uniform image2D oImage;
 
@@ -52,9 +47,12 @@ uniform Camera uCamera;
 uniform int uNbMaterials;
 uniform int uNbTriangles;
 
-layout (binding = 0, std140) uniform uGeometryData {
-    Triangle uTriangles[MAX_NB_TRIANGLES];
-    Material uMaterials[MAX_NB_MATERIALS];
+layout (binding = 2, std430) readonly buffer uMaterialsSSBO {
+    Material uMaterials[];
+};
+
+layout (binding = 3, std430) readonly buffer uTrianglesSSBO {
+    Triangle uTriangles[];
 };
 
 
@@ -109,9 +107,9 @@ Hit rayTriangleIntersection(Ray ray, Triangle triangle){
     return hit;
 }
 
-void getAllHits(Ray ray, uint nbTriangles, Triangle[MAX_NB_TRIANGLES] triangles, inout Hit closestHit){
+void getAllHits(Ray ray, uint nbTriangles, inout Hit closestHit){
     for(uint i=0; i<nbTriangles; i++){
-        Triangle curTriangle = triangles[i];
+        Triangle curTriangle = uTriangles[i];
         Hit curHit = rayTriangleIntersection(ray, curTriangle);
         if(curHit._DidHit == 0) continue;
         if(closestHit._DidHit == 0 || curHit._Coords.w < closestHit._Coords.w){
@@ -120,9 +118,9 @@ void getAllHits(Ray ray, uint nbTriangles, Triangle[MAX_NB_TRIANGLES] triangles,
     }
 }
 
-void getColor(Material[MAX_NB_MATERIALS] materials, Triangle[MAX_NB_TRIANGLES] triangles, Hit hit, inout vec4 color){
+void getColor(Hit hit, inout vec4 color){
     if(hit._DidHit == 0) return;
-    color = materials[triangles[hit._TriangleId]._MaterialId]._Color;
+    color = uMaterials[uTriangles[hit._TriangleId]._MaterialId]._Color;
 }
 
 
@@ -140,9 +138,8 @@ void main() {
 
     Hit closestHit;
     closestHit._DidHit = 0;
-    getAllHits(ray, uNbTriangles, uTriangles, closestHit);
-
-    getColor(uMaterials, uTriangles, closestHit, value);
+    getAllHits(ray, uNbTriangles, closestHit);
+    getColor(closestHit, value);
 
     imageStore(oImage, texelCoord, value);
 }

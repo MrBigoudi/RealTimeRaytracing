@@ -2,7 +2,11 @@
 
 #include <algorithm>
 
-Scene::Scene(){}
+#include "errorHandler.hpp"
+
+Scene::Scene(){
+    createSSBO();
+}
 
 std::array<TriangleGPU, MAX_NB_TRIANGLES> Scene::getTriangleToGPUData() const {
     std::array<TriangleGPU, MAX_NB_TRIANGLES> trianglesGPU{};
@@ -48,46 +52,65 @@ void Scene::addRandomMaterial(){
     _Materials.emplace_back(materialId);
 }
 
-void Scene::createUBO(){
-    GLuint ubo = 0;
-    glGenBuffers(1, &ubo);
-    assert(ubo != 0);
-    glBindBuffer(GL_UNIFORM_BUFFER, ubo);
+void Scene::createSSBO(){
+    glCreateBuffers(1, &_MaterialsSSBO);
+    glCreateBuffers(1, &_TrianglesSSBO);
+    assert(_MaterialsSSBO != 0);
+    assert(_TrianglesSSBO != 0);
 
     // Calculate the total size of the buffer
-    size_t trianglesSize = sizeof(TriangleGPU) * MAX_NB_TRIANGLES;
     size_t materialsSize = sizeof(MaterialGPU) * MAX_NB_MATERIALS;
-    size_t totalSize = trianglesSize + materialsSize;
+    size_t trianglesSize = sizeof(TriangleGPU) * MAX_NB_TRIANGLES;
 
-    // Allocate space for the buffer
-    glBufferData(GL_UNIFORM_BUFFER, totalSize, nullptr, GL_STATIC_DRAW);
+    glNamedBufferStorage(_MaterialsSSBO, 
+                     materialsSize, 
+                     nullptr, 
+                     GL_DYNAMIC_STORAGE_BIT);
 
-    // Upload data1 to the buffer
-    std::array<TriangleGPU, MAX_NB_TRIANGLES> dataTriangles = getTriangleToGPUData();
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, trianglesSize, dataTriangles.data());
+    glNamedBufferStorage(_TrianglesSSBO, 
+                     trianglesSize, 
+                     nullptr, 
+                     GL_DYNAMIC_STORAGE_BIT);
+}
 
-    // Upload data2 to the buffer
-    std::array<MaterialGPU, MAX_NB_MATERIALS> dataMaterials = getMaterialToGPUData();
-    glBufferSubData(GL_UNIFORM_BUFFER, trianglesSize, materialsSize, dataMaterials.data());
+void Scene::bindSSBO(){
+    // materials
+    GLuint materialsBinding = 2;
+    GLsizeiptr materialsSize = sizeof(MaterialGPU) * _Materials.size();
+    // update the materials
+    glNamedBufferSubData(_MaterialsSSBO,
+        0,
+        materialsSize,
+        getMaterialToGPUData().data()
+    );
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, materialsBinding, _MaterialsSSBO);
 
-    // Bind the buffer to the uniform block binding point
-    GLuint bindingPoint = 0;
-    glBindBufferBase(GL_UNIFORM_BUFFER, bindingPoint, ubo);
-
-    // Unbind the buffer
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    // triangles
+    GLuint trianglesBinding = 3;
+    GLsizeiptr trianglesSize = sizeof(TriangleGPU) * _Triangles.size();
+    // update the materials
+    glNamedBufferSubData(_TrianglesSSBO,
+        0,
+        trianglesSize,
+        getTriangleToGPUData().data()
+    );
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, trianglesBinding, _TrianglesSSBO);
+    if(glGetError() != GL_NO_ERROR){
+        ErrorHandler::handle(
+            __FILE__,
+            __LINE__,
+            ErrorCode::OPENGL_ERROR,
+            "Failed to bind the ssbos\n"
+        );
+    }
 }
 
 void Scene::sendDataToGpu(ProgramPtr program){
     program->use();
-    // Create and bind the UBO
-    createUBO();
-    // Get the uniform block index
-    GLuint blockIndex = glGetUniformBlockIndex(program->getId(), "uGeometryData");
-    // Bind the uniform block to the binding point
-    GLuint bindingPoint = 0;
-    glUniformBlockBinding(program->getId(), blockIndex, bindingPoint);
+    // bind the SSBOs
+    bindSSBO();
     // Set the number of elements
     program->setUInt("uNbTriangles", _Triangles.size());
     program->setUInt("uNbMaterials", _Materials.size());
+    glUseProgram(0);
 }
