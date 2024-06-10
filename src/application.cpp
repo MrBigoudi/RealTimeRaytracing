@@ -167,16 +167,29 @@ void Application::initRectangleVAO() {
 
 void Application::initScene() {
     _Scene = ScenePtr(new Scene());
+
+    // first triangle
     _Scene->addMaterial({0.2, 0.3, 0.1, 1.});
-    _Scene->addMaterial({0., 0., 1., 1.});
-    _Scene->addTriangle(0, {-1,-1,1,1}, {1,-1,1,1}, {0,1,1,1});
-    _Scene->addTriangle(1, {-2,0,2,1}, {5,0,0,1}, {0,2,0,1});
+    MeshPtr basicTri = Mesh::primitiveTriangle();
+    basicTri->setMaterial(1);
+    basicTri->setRotation(0.f, 0.f, glm::radians(180.f));
+    basicTri->setPosition(glm::vec3(2.f, 1.f, 0.f));
+    basicTri->setScale(2.f);
+    _Scene->addObject(basicTri);
+
+    // random materials
     for(size_t i=0; i<MAX_NB_MATERIALS; i++){
         _Scene->addRandomMaterial();
     }
-    for(size_t i=0; i<MAX_NB_TRIANGLES; i++){
-        _Scene->addRandomTriangle();
-    }
+    // random triangles
+    MeshPtr randTri = Mesh::primitiveTriangle();
+    randTri->setMaterial(static_cast<uint32_t>(static_cast<float>(rand())/RAND_MAX*static_cast<float>(MAX_NB_MATERIALS)));
+    randTri->setRotation(
+        2.f*rand()/RAND_MAX*std::numbers::pi - std::numbers::pi, 
+        2.f*rand()/RAND_MAX*std::numbers::pi - std::numbers::pi,
+        2.f*rand()/RAND_MAX*std::numbers::pi - std::numbers::pi
+    );
+    _Scene->addObject(randTri);
 }
 
 CameraPtr Application::getCamera() const{

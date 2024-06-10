@@ -23,10 +23,16 @@ struct Triangle {
     vec4 _P1;
     uint _Id;
     uint _MaterialId;
+    uint _ModelId;
 };
 
 struct Material {
     vec4 _Color;
+    uint _Id;
+};
+
+struct Model {
+    mat4 _ModelMatrix;
     uint _Id;
 };
 
@@ -46,6 +52,7 @@ uniform float uTime;
 uniform Camera uCamera;
 uniform int uNbMaterials;
 uniform int uNbTriangles;
+uniform int uNbModels;
 
 layout (binding = 2, std430) readonly buffer uMaterialsSSBO {
     Material uMaterials[];
@@ -53,6 +60,10 @@ layout (binding = 2, std430) readonly buffer uMaterialsSSBO {
 
 layout (binding = 3, std430) readonly buffer uTrianglesSSBO {
     Triangle uTriangles[];
+};
+
+layout (binding = 4, std430) readonly buffer uModelsSSBO {
+    Model uModels[];
 };
 
 
@@ -69,8 +80,12 @@ Ray getRay(vec2 pos){ // pos between 0 and 1
 
 Hit rayTriangleIntersection(Ray ray, Triangle triangle){
     Hit hit;
-    vec3 triEdge0 = triangle._P1.xyz - triangle._P0.xyz;
-    vec3 triEdge1 = triangle._P2.xyz - triangle._P0.xyz;
+    vec3 p0 = (uModels[triangle._ModelId]._ModelMatrix * triangle._P0).xyz;
+    vec3 p1 = (uModels[triangle._ModelId]._ModelMatrix * triangle._P1).xyz;
+    vec3 p2 = (uModels[triangle._ModelId]._ModelMatrix * triangle._P2).xyz;
+
+    vec3 triEdge0 = p1 - p0;
+    vec3 triEdge1 = p2 - p0;
     vec3 triNormale = normalize(cross(triEdge0, triEdge1));
 
     vec3 q = cross(ray._Direction.xyz, triEdge1);
@@ -82,7 +97,7 @@ Hit rayTriangleIntersection(Ray ray, Triangle triangle){
         return hit;
     }
 
-    vec4 s = (ray._Origin - triangle._P0) / a;
+    vec4 s = (ray._Origin - vec4(p0, 1.f)) / a;
     vec3 r = cross(s.xyz, triEdge0);
 
     hit._Coords.x = dot(s.xyz, q);

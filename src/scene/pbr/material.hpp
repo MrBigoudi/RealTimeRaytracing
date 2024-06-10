@@ -7,7 +7,7 @@
 
 
 struct MaterialGPU{
-    glm::vec4 _Color;
+    glm::vec4 _Color = {1.f, 1.f, 1.f, 1.f};
     alignas(16) uint32_t _Id;
 };
 
