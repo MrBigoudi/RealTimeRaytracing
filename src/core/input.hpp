@@ -1,5 +1,6 @@
 #pragma once
 
+#include "camera.hpp"
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 
@@ -22,5 +23,6 @@ class Input{
 
     public:
         static void mouseCallback(GLFWwindow* window, double xpos, double ypos);
+        static void cameraInput(GLFWwindow* window, CameraPtr camera, float dt);
 
 };

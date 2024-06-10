@@ -91,6 +91,8 @@ void Application::processInput() const {
     if(glfwGetKey(_Window, GLFW_KEY_ESCAPE) == GLFW_PRESS){
         glfwSetWindowShouldClose(_Window, GLFW_TRUE);
     }
+    float dt = glfwGetTime() - _FPS._LastFrame;
+    Input::cameraInput(_Window, _Camera, dt);
 }
 
 void Application::clearScreen() const {
@@ -170,26 +172,23 @@ void Application::initScene() {
 
     // first triangle
     _Scene->addMaterial({0.2, 0.3, 0.1, 1.});
-    MeshPtr basicTri = Mesh::primitiveTriangle();
+    MeshPtr basicTri = Mesh::primitiveCube();
     basicTri->setMaterial(1);
-    basicTri->setRotation(0.f, 0.f, glm::radians(180.f));
-    basicTri->setPosition(glm::vec3(2.f, 1.f, 0.f));
-    basicTri->setScale(2.f);
     _Scene->addObject(basicTri);
 
-    // random materials
-    for(size_t i=0; i<MAX_NB_MATERIALS; i++){
-        _Scene->addRandomMaterial();
-    }
-    // random triangles
-    MeshPtr randTri = Mesh::primitiveTriangle();
-    randTri->setMaterial(static_cast<uint32_t>(static_cast<float>(rand())/RAND_MAX*static_cast<float>(MAX_NB_MATERIALS)));
-    randTri->setRotation(
-        2.f*rand()/RAND_MAX*std::numbers::pi - std::numbers::pi, 
-        2.f*rand()/RAND_MAX*std::numbers::pi - std::numbers::pi,
-        2.f*rand()/RAND_MAX*std::numbers::pi - std::numbers::pi
-    );
-    _Scene->addObject(randTri);
+    // // random materials
+    // for(size_t i=0; i<MAX_NB_MATERIALS; i++){
+    //     _Scene->addRandomMaterial();
+    // }
+    // // random triangles
+    // MeshPtr randTri = Mesh::primitiveTriangle();
+    // randTri->setMaterial(static_cast<uint32_t>(static_cast<float>(rand())/RAND_MAX*static_cast<float>(MAX_NB_MATERIALS)));
+    // randTri->setRotation(
+    //     2.f*rand()/RAND_MAX*std::numbers::pi - std::numbers::pi, 
+    //     2.f*rand()/RAND_MAX*std::numbers::pi - std::numbers::pi,
+    //     2.f*rand()/RAND_MAX*std::numbers::pi - std::numbers::pi
+    // );
+    // _Scene->addObject(randTri);
 }
 
 CameraPtr Application::getCamera() const{
@@ -229,7 +228,7 @@ void Application::drawOneFrame() const {
     glDispatchCompute(nbGroupsX, nbGroupsY, nbGroupsZ);
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
-    // use the graphics shaders
+    // use the graphics shadersdt
     assert(_RenderingProgram->isInit());
     _RenderingProgram->use(); 
     assert(_RectangleVao != 0);

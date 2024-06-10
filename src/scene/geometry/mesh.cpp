@@ -69,11 +69,107 @@ MeshPtr Mesh::primitiveTriangle(){
 
 MeshPtr Mesh::primitiveSquare(){
     MeshPtr newMesh = MeshPtr(new Mesh());
+    newMesh->_Triangles.emplace_back(
+        glm::vec3(-1.f, 1.f, 0.f),
+        glm::vec3(-1.f, -1.f, 0.f),
+        glm::vec3(1.f, -1.f, 0.f),
+        newMesh->_InternalStruct._Id
+    );
+    newMesh->_Triangles.emplace_back(
+        glm::vec3(-1.f, 1.f, 0.f),
+        glm::vec3(1.f, -1.f, 0.f),
+        glm::vec3(1.f, 1.f, 0.f),
+        newMesh->_InternalStruct._Id
+    );
     return newMesh;
 }
 
 MeshPtr Mesh::primitiveCube(){
     MeshPtr newMesh = MeshPtr(new Mesh());
+    // front face
+    newMesh->_Triangles.emplace_back(
+        glm::vec3(-1.f, 1.f, -1.f),
+        glm::vec3(-1.f, -1.f, -1.f),
+        glm::vec3(1.f, -1.f, -1.f),
+        newMesh->_InternalStruct._Id
+    );
+    newMesh->_Triangles.emplace_back(
+        glm::vec3(-1.f, 1.f, -1.f),
+        glm::vec3(1.f, -1.f, -1.f),
+        glm::vec3(1.f, 1.f, -1.f),
+        newMesh->_InternalStruct._Id
+    );
+
+    // back face
+    newMesh->_Triangles.emplace_back(
+        glm::vec3(-1.f, -1.f, 1.f),
+        glm::vec3(-1.f, 1.f, 1.f),
+        glm::vec3(1.f, -1.f, 1.f),
+        newMesh->_InternalStruct._Id
+    );
+    newMesh->_Triangles.emplace_back(
+        glm::vec3(1.f, -1.f, 1.f),
+        glm::vec3(-1.f, 1.f, 1.f),
+        glm::vec3(1.f, 1.f, 1.f),
+        newMesh->_InternalStruct._Id
+    );
+
+    // right face
+    newMesh->_Triangles.emplace_back(
+        glm::vec3(1.f, -1.f, 1.f),
+        glm::vec3(1.f, 1.f, 1.f),
+        glm::vec3(1.f, 1.f, -1.f),
+        newMesh->_InternalStruct._Id
+    );
+    newMesh->_Triangles.emplace_back(
+        glm::vec3(1.f, -1.f, 1.f),
+        glm::vec3(1.f, 1.f, -1.f),
+        glm::vec3(1.f, -1.f, -1.f),
+        newMesh->_InternalStruct._Id
+    );
+
+    // left face
+    newMesh->_Triangles.emplace_back(
+        glm::vec3(-1.f, 1.f, 1.f),
+        glm::vec3(-1.f, -1.f, 1.f),
+        glm::vec3(-1.f, 1.f, -1.f),
+        newMesh->_InternalStruct._Id
+    );
+    newMesh->_Triangles.emplace_back(
+        glm::vec3(-1.f, 1.f, -1.f),
+        glm::vec3(-1.f, -1.f, 1.f),
+        glm::vec3(-1.f, -1.f, -1.f),
+        newMesh->_InternalStruct._Id
+    );
+
+    // top face
+    newMesh->_Triangles.emplace_back(
+        glm::vec3(-1.f, 1.f, -1.f),
+        glm::vec3(1.f, 1.f, -1.f),
+        glm::vec3(1.f, 1.f, 1.f),
+        newMesh->_InternalStruct._Id
+    );
+    newMesh->_Triangles.emplace_back(
+        glm::vec3(-1.f, 1.f, -1.f),
+        glm::vec3(1.f, 1.f, 1.f),
+        glm::vec3(-1.f, 1.f, 1.f),
+        newMesh->_InternalStruct._Id
+    );
+
+    // bottom face
+    newMesh->_Triangles.emplace_back(
+        glm::vec3(-1.f, -1.f, -1.f),
+        glm::vec3(1.f, -1.f, 1.f),
+        glm::vec3(1.f, -1.f, -1.f),
+        newMesh->_InternalStruct._Id
+    );
+    newMesh->_Triangles.emplace_back(
+        glm::vec3(-1.f, -1.f, -1.f),
+        glm::vec3(-1.f, -1.f, 1.f),
+        glm::vec3(1.f, -1.f, 1.f),
+        newMesh->_InternalStruct._Id
+    );
+
     return newMesh;
 }
 

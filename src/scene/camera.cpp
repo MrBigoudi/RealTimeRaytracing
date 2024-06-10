@@ -64,15 +64,15 @@ float Camera::getPlaneWidth(float planeHeight) const {
 }
 
 void Camera::processKeyboard(CameraMovement direction, float deltaTime){
-    float velocity = _MovementSpeed * deltaTime;
-    if(_Accelerate) velocity *= 5.f;
+    float velocity = _MOVEMENT_SPEED * deltaTime;
+    if(_Accelerate) velocity *= _MOVEMENT_ACCELERATION;
 
     switch(direction){
         case FORWARD:
-            _Eye += _At * velocity;
+            _Eye -= _At * velocity;
             break;
         case BACKWARD:
-            _Eye -= _At * velocity;
+            _Eye += _At * velocity;
             break;
         case LEFT:
             _Eye -= _Right * velocity;
@@ -90,8 +90,8 @@ void Camera::processKeyboard(CameraMovement direction, float deltaTime){
 }
 
 void Camera::ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch){
-    xoffset *= _MouseSensitivity;
-    yoffset *= _MouseSensitivity;
+    xoffset *= _MOUSE_SENSITIVITY;
+    yoffset *= _MOUSE_SENSITIVITY;
     _Yaw   += xoffset;
     _Pitch += yoffset;
     // make sure that when pitch is out of bounds, screen doesn't get flipped

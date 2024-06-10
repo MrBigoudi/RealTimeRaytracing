@@ -1,5 +1,5 @@
 # Todo list
 
-- create a mesh class
-- create random sample
+- use list of indices + list of 3d points instead of triangles
+- create random sampling
 - add lights

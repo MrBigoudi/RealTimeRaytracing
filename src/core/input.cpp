@@ -29,3 +29,29 @@ void Input::mouseCallback(GLFWwindow* window, double xpos, double ypos) {
     assert(app);
     app->getCamera()->ProcessMouseMovement(static_cast<float>(xoffset), static_cast<float>(yoffset));
 }
+
+
+void Input::cameraInput(GLFWwindow* window, CameraPtr camera, float dt){
+    // move camera
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        camera->processKeyboard(FORWARD, dt);
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        camera->processKeyboard(BACKWARD, dt);
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        camera->processKeyboard(LEFT, dt);
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        camera->processKeyboard(RIGHT, dt);
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+        camera->processKeyboard(UP, dt);
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+        camera->processKeyboard(DOWN, dt);
+
+    // accelerate camera
+    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS){
+        camera->_Accelerate = true;
+    }
+    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_RELEASE){
+        camera->_Accelerate = false;
+    }
+
+}

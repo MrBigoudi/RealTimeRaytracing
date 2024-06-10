@@ -46,8 +46,9 @@ class Camera{
         float _Near = 0.f;
         float _Far = 0.f;
 
-        float _MovementSpeed = 0.5f;
-        float _MouseSensitivity = 0.1f;
+        const float _MOVEMENT_ACCELERATION = 5.f;
+        const float _MOVEMENT_SPEED = 20.f;
+        const float _MOUSE_SENSITIVITY = 0.1f;
 
         float _Yaw = -90.f;
         float _Pitch = 0.f;
