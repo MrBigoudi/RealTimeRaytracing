@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <glm/glm.hpp>
 
-#define MAX_NB_TRIANGLES 2<<5
+#define MAX_NB_TRIANGLES 2<<15
 
 struct TriangleGPU{
     glm::vec4 _P0;

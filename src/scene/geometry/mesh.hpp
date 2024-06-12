@@ -21,6 +21,7 @@ class Mesh{
     public:
         std::vector<Triangle> _Triangles{};
         MeshModelGPU _InternalStruct;
+        static const std::string MODELS_DIRECTORY;
 
     public:
         Mesh();
@@ -37,5 +38,6 @@ class Mesh{
         static MeshPtr primitiveSquare();
         static MeshPtr primitiveCube();
         static MeshPtr primitiveSphere();
+        static MeshPtr load(const std::string& path);
 
 };

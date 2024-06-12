@@ -45,7 +45,7 @@ std::array<MaterialGPU, MAX_NB_MATERIALS> Scene::getMaterialToGPUData() const {
 }
 
 
-void Scene::addObject(MeshPtr mesh){
+void Scene::addMesh(MeshPtr mesh){
     if(_Meshes.size() == MAX_NB_MESHES) return;
     _Meshes.push_back(mesh);
     _NbMeshes++;

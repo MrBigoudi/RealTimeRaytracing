@@ -37,7 +37,7 @@ class Scene{
         std::array<MaterialGPU, MAX_NB_MATERIALS> getMaterialToGPUData() const;
         std::array<MeshModelGPU, MAX_NB_MESHES> getMeshModelToGPUData() const;
 
-        void addObject(MeshPtr mesh);
+        void addMesh(MeshPtr mesh);
         void addMaterial(const glm::vec4& color);
         void addRandomMaterial();
 

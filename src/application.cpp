@@ -170,11 +170,17 @@ void Application::initRectangleVAO() {
 void Application::initScene() {
     _Scene = ScenePtr(new Scene());
 
-    // first triangle
     _Scene->addMaterial({0.2, 0.3, 0.1, 1.});
-    MeshPtr basicTri = Mesh::primitiveCube();
-    basicTri->setMaterial(1);
-    _Scene->addObject(basicTri);
+
+    // load model
+    MeshPtr model = Mesh::load(Mesh::MODELS_DIRECTORY + "teapot.obj");
+    model->setMaterial(1);
+    _Scene->addMesh(model);
+
+    // // first triangle
+    // MeshPtr basicTri = Mesh::primitiveCube();
+    // basicTri->setMaterial(1);
+    // _Scene->addMesh(basicTri);
 
     // // random materials
     // for(size_t i=0; i<MAX_NB_MATERIALS; i++){
@@ -188,7 +194,7 @@ void Application::initScene() {
     //     2.f*rand()/RAND_MAX*std::numbers::pi - std::numbers::pi,
     //     2.f*rand()/RAND_MAX*std::numbers::pi - std::numbers::pi
     // );
-    // _Scene->addObject(randTri);
+    // _Scene->addMesh(randTri);
 }
 
 CameraPtr Application::getCamera() const{

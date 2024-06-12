@@ -1,7 +1,13 @@
 #include "mesh.hpp"
+
+#include <tiny_obj_loader.h>
 #include <glm/ext.hpp>
+#include "errorHandler.hpp"
 
 uint32_t Mesh::_IdGenerator = 0;
+
+const std::string Mesh::MODELS_DIRECTORY = std::string(PROJECT_SOURCE_DIR) + "/resources/models/";
+
 
 Mesh::Mesh(){
     _InternalStruct._Id = _IdGenerator;
@@ -176,4 +182,83 @@ MeshPtr Mesh::primitiveCube(){
 MeshPtr Mesh::primitiveSphere(){
     MeshPtr newMesh = MeshPtr(new Mesh());
     return newMesh;
+}
+
+MeshPtr Mesh::load(const std::string& path){
+    tinyobj::attrib_t attrib;
+    std::vector<tinyobj::shape_t> shapes;
+    std::vector<tinyobj::material_t> materials;
+    std::string warn, err;
+
+    tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, path.c_str());
+
+    if(!warn.empty()){
+        ErrorHandler::handle(
+            __FILE__, __LINE__,
+            ErrorCode::IO_ERROR,
+            "Warning loading object `" + path + "': " + warn + "\n",
+            ErrorLevel::WARNING 
+        );
+    }
+
+    if(!err.empty()){
+        ErrorHandler::handle(
+            __FILE__, __LINE__,
+            ErrorCode::IO_ERROR,
+            "Error loading object `" + path + "': " + warn + "\n"
+        );
+    }
+
+    MeshPtr loadedModel = MeshPtr(new Mesh());
+    
+    // Loop over shapes
+    for (const auto& shape : shapes) {
+        // Loop over faces(polygon)
+        size_t index_offset = 0;
+        for (size_t f = 0; f < shape.mesh.num_face_vertices.size(); f++) {
+            size_t fv = shape.mesh.num_face_vertices[f];
+
+            // Check if the face is a triangle
+            if (fv != 3) {
+                ErrorHandler::handle(
+                    __FILE__, __LINE__,
+                    ErrorCode::BAD_VALUE_ERROR,
+                    "Error loading object `" + path + "': Mesh face with vertices other than 3 is not supported!\n"
+                );
+                continue;
+            }
+
+            glm::vec3 vertices[3];
+            for (size_t v = 0; v < fv; v++) {
+                tinyobj::index_t idx = shape.mesh.indices[index_offset + v];
+                tinyobj::real_t vx = attrib.vertices[3 * idx.vertex_index + 0];
+                tinyobj::real_t vy = attrib.vertices[3 * idx.vertex_index + 1];
+                tinyobj::real_t vz = attrib.vertices[3 * idx.vertex_index + 2];
+                vertices[v] = glm::vec3(vx, vy, vz);
+            }
+
+            // check ccw order
+            // Calculate the normal of the triangle
+            glm::vec3 edge1 = vertices[1] - vertices[0];
+            glm::vec3 edge2 = vertices[2] - vertices[0];
+            glm::vec3 normal = glm::normalize(glm::cross(edge1, edge2));
+            // Check if the normal points in the correct direction
+            // Assuming positive z direction is the front face direction
+            if (normal.z < 0.0f) {
+                // If the normal points in the wrong direction, swap vertices[1] and vertices[2]
+                std::swap(vertices[1], vertices[2]);
+            }
+
+            // Create a triangle and add it to the mesh
+            loadedModel->_Triangles.emplace_back(
+                vertices[0], vertices[1], vertices[2], 
+                loadedModel->_InternalStruct._Id
+            );
+
+            index_offset += fv;
+        }
+    }
+
+    return loadedModel;
+
 }
