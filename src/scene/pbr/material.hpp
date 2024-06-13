@@ -8,14 +8,17 @@
 
 struct MaterialGPU{
     glm::vec4 _Color = {1.f, 1.f, 1.f, 1.f};
-    alignas(16) uint32_t _Id;
 };
 
 class Material{
+    private:
+        static uint32_t _IdGenerator;
+        uint32_t _Id = 0;
+
     public:
         MaterialGPU _InternalStruct{};
 
     public:
-        Material(uint32_t id, const glm::vec4& color);
-        Material(uint32_t id);
+        Material(const glm::vec4& color);
+        Material();
 };

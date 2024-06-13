@@ -11,12 +11,13 @@ using MeshPtr = std::shared_ptr<Mesh>;
 
 struct MeshModelGPU {
     glm::mat4 _ModelMatrix = glm::mat4(1);
-    uint32_t _Id;
+    uint32_t _MaterialId = 0;
 };
 
 class Mesh{
     private:
         static uint32_t _IdGenerator;
+        uint32_t _Id = 0;
 
     public:
         std::vector<Triangle> _Triangles{};

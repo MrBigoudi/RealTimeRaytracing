@@ -2,15 +2,18 @@
 
 #include <cstdlib>
 
-Material::Material(uint32_t id, const glm::vec4& color){
+uint32_t Material::_IdGenerator = 0;
+
+
+Material::Material(const glm::vec4& color){
+    _Id = _IdGenerator++;
     _InternalStruct = {};
-    _InternalStruct._Id = id;
     _InternalStruct._Color = color;
 }
 
-Material::Material(uint32_t id){
+Material::Material(){
+    _Id = _IdGenerator++;
     _InternalStruct = {};
-    _InternalStruct._Id = id;
     _InternalStruct._Color = glm::vec4(
         static_cast<float>(rand()) / RAND_MAX, 
         static_cast<float>(rand()) / RAND_MAX, 

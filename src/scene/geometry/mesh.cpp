@@ -10,8 +10,7 @@ const std::string Mesh::MODELS_DIRECTORY = std::string(PROJECT_SOURCE_DIR) + "/r
 
 
 Mesh::Mesh(){
-    _InternalStruct._Id = _IdGenerator;
-    _IdGenerator++;
+    _Id = _IdGenerator++;
 }
 
 void Mesh::setPosition(const glm::vec3& position){
@@ -57,9 +56,7 @@ void Mesh::setRotation(float thetaX, float thetaY, float thetaZ){
 }
 
 void Mesh::setMaterial(uint32_t materialId){
-    for(Triangle& triangle : _Triangles){
-        triangle._InternalStruct._MaterialId = materialId;
-    }
+    _InternalStruct._MaterialId = materialId;
 }
 
 MeshPtr Mesh::primitiveTriangle(){
@@ -68,7 +65,7 @@ MeshPtr Mesh::primitiveTriangle(){
         glm::vec3(0.f, 1.f, 0.f),
         glm::vec3(-1.f, -1.f, 0.f),
         glm::vec3(1.f, -1.f, 0.f),
-        newMesh->_InternalStruct._Id
+        newMesh->_Id
     );
     return newMesh;
 }
@@ -79,13 +76,13 @@ MeshPtr Mesh::primitiveSquare(){
         glm::vec3(-1.f, 1.f, 0.f),
         glm::vec3(-1.f, -1.f, 0.f),
         glm::vec3(1.f, -1.f, 0.f),
-        newMesh->_InternalStruct._Id
+        newMesh->_Id
     );
     newMesh->_Triangles.emplace_back(
         glm::vec3(-1.f, 1.f, 0.f),
         glm::vec3(1.f, -1.f, 0.f),
         glm::vec3(1.f, 1.f, 0.f),
-        newMesh->_InternalStruct._Id
+        newMesh->_Id
     );
     return newMesh;
 }
@@ -97,13 +94,13 @@ MeshPtr Mesh::primitiveCube(){
         glm::vec3(-1.f, 1.f, -1.f),
         glm::vec3(-1.f, -1.f, -1.f),
         glm::vec3(1.f, -1.f, -1.f),
-        newMesh->_InternalStruct._Id
+        newMesh->_Id
     );
     newMesh->_Triangles.emplace_back(
         glm::vec3(-1.f, 1.f, -1.f),
         glm::vec3(1.f, -1.f, -1.f),
         glm::vec3(1.f, 1.f, -1.f),
-        newMesh->_InternalStruct._Id
+        newMesh->_Id
     );
 
     // back face
@@ -111,13 +108,13 @@ MeshPtr Mesh::primitiveCube(){
         glm::vec3(-1.f, -1.f, 1.f),
         glm::vec3(-1.f, 1.f, 1.f),
         glm::vec3(1.f, -1.f, 1.f),
-        newMesh->_InternalStruct._Id
+        newMesh->_Id
     );
     newMesh->_Triangles.emplace_back(
         glm::vec3(1.f, -1.f, 1.f),
         glm::vec3(-1.f, 1.f, 1.f),
         glm::vec3(1.f, 1.f, 1.f),
-        newMesh->_InternalStruct._Id
+        newMesh->_Id
     );
 
     // right face
@@ -125,13 +122,13 @@ MeshPtr Mesh::primitiveCube(){
         glm::vec3(1.f, -1.f, 1.f),
         glm::vec3(1.f, 1.f, 1.f),
         glm::vec3(1.f, 1.f, -1.f),
-        newMesh->_InternalStruct._Id
+        newMesh->_Id
     );
     newMesh->_Triangles.emplace_back(
         glm::vec3(1.f, -1.f, 1.f),
         glm::vec3(1.f, 1.f, -1.f),
         glm::vec3(1.f, -1.f, -1.f),
-        newMesh->_InternalStruct._Id
+        newMesh->_Id
     );
 
     // left face
@@ -139,13 +136,13 @@ MeshPtr Mesh::primitiveCube(){
         glm::vec3(-1.f, 1.f, 1.f),
         glm::vec3(-1.f, -1.f, 1.f),
         glm::vec3(-1.f, 1.f, -1.f),
-        newMesh->_InternalStruct._Id
+        newMesh->_Id
     );
     newMesh->_Triangles.emplace_back(
         glm::vec3(-1.f, 1.f, -1.f),
         glm::vec3(-1.f, -1.f, 1.f),
         glm::vec3(-1.f, -1.f, -1.f),
-        newMesh->_InternalStruct._Id
+        newMesh->_Id
     );
 
     // top face
@@ -153,13 +150,13 @@ MeshPtr Mesh::primitiveCube(){
         glm::vec3(-1.f, 1.f, -1.f),
         glm::vec3(1.f, 1.f, -1.f),
         glm::vec3(1.f, 1.f, 1.f),
-        newMesh->_InternalStruct._Id
+        newMesh->_Id
     );
     newMesh->_Triangles.emplace_back(
         glm::vec3(-1.f, 1.f, -1.f),
         glm::vec3(1.f, 1.f, 1.f),
         glm::vec3(-1.f, 1.f, 1.f),
-        newMesh->_InternalStruct._Id
+        newMesh->_Id
     );
 
     // bottom face
@@ -167,13 +164,13 @@ MeshPtr Mesh::primitiveCube(){
         glm::vec3(-1.f, -1.f, -1.f),
         glm::vec3(1.f, -1.f, 1.f),
         glm::vec3(1.f, -1.f, -1.f),
-        newMesh->_InternalStruct._Id
+        newMesh->_Id
     );
     newMesh->_Triangles.emplace_back(
         glm::vec3(-1.f, -1.f, -1.f),
         glm::vec3(-1.f, -1.f, 1.f),
         glm::vec3(1.f, -1.f, 1.f),
-        newMesh->_InternalStruct._Id
+        newMesh->_Id
     );
 
     return newMesh;
@@ -252,7 +249,7 @@ MeshPtr Mesh::load(const std::string& path){
             // Create a triangle and add it to the mesh
             loadedModel->_Triangles.emplace_back(
                 vertices[0], vertices[1], vertices[2], 
-                loadedModel->_InternalStruct._Id
+                loadedModel->_Id
             );
 
             index_offset += fv;

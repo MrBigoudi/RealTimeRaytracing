@@ -21,19 +21,16 @@ struct Triangle {
     vec4 _P0;
     vec4 _P2;
     vec4 _P1;
-    uint _Id;
-    uint _MaterialId;
     uint _ModelId;
 };
 
 struct Material {
     vec4 _Color;
-    uint _Id;
 };
 
 struct Model {
     mat4 _ModelMatrix;
-    uint _Id;
+    uint _MaterialId;
 };
 
 struct Hit {
@@ -78,8 +75,11 @@ Ray getRay(vec2 pos){ // pos between 0 and 1
     return ray;
 }
 
-Hit rayTriangleIntersection(Ray ray, Triangle triangle){
+Hit rayTriangleIntersection(Ray ray, uint triangleIndex){
     Hit hit;
+
+    Triangle triangle = uTriangles[triangleIndex];
+
     vec3 p0 = (uModels[triangle._ModelId]._ModelMatrix * triangle._P0).xyz;
     vec3 p1 = (uModels[triangle._ModelId]._ModelMatrix * triangle._P1).xyz;
     vec3 p2 = (uModels[triangle._ModelId]._ModelMatrix * triangle._P2).xyz;
@@ -117,15 +117,14 @@ Hit rayTriangleIntersection(Ray ray, Triangle triangle){
 
     hit._DidHit = 1;
     hit._Coords.w = t;
-    hit._TriangleId = triangle._Id;
+    hit._TriangleId = triangleIndex;
 
     return hit;
 }
 
 void getAllHits(Ray ray, uint nbTriangles, inout Hit closestHit){
     for(uint i=0; i<nbTriangles; i++){
-        Triangle curTriangle = uTriangles[i];
-        Hit curHit = rayTriangleIntersection(ray, curTriangle);
+        Hit curHit = rayTriangleIntersection(ray, i);
         if(curHit._DidHit == 0) continue;
         if(closestHit._DidHit == 0 || curHit._Coords.w < closestHit._Coords.w){
             closestHit = curHit;
@@ -135,7 +134,7 @@ void getAllHits(Ray ray, uint nbTriangles, inout Hit closestHit){
 
 void getColor(Hit hit, inout vec4 color){
     if(hit._DidHit == 0) return;
-    color = uMaterials[uTriangles[hit._TriangleId]._MaterialId]._Color;
+    color = uMaterials[uModels[uTriangles[hit._TriangleId]._ModelId]._MaterialId]._Color;
 }
 
 

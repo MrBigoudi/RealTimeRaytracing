@@ -54,15 +54,13 @@ void Scene::addMesh(MeshPtr mesh){
 
 void Scene::addMaterial(const glm::vec4& color){
     if(_Materials.size() == MAX_NB_MATERIALS) return;
-    uint32_t materialId = _Materials.size();
-    _Materials.emplace_back(materialId, color);
+    _Materials.emplace_back(color);
     _NbMaterials++;
 }
 
 void Scene::addRandomMaterial(){
     if(_Materials.size() == MAX_NB_MATERIALS) return;
-    uint32_t materialId = _Materials.size();
-    _Materials.emplace_back(materialId);
+    _Materials.emplace_back();
     _NbMaterials++;
 }
 

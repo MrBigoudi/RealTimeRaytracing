@@ -16,7 +16,7 @@ using ScenePtr = std::shared_ptr<Scene>;
 
 class Scene{
     private:
-        std::vector<Material> _Materials = {Material(0, {1.f,1.f,1.f,1.f})}; // always one default material
+        std::vector<Material> _Materials = {Material()}; // always one default material
         std::vector<MeshPtr> _Meshes = {};
 
         uint32_t _MaterialIdGenerator = 0;
