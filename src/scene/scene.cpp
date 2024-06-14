@@ -1,4 +1,5 @@
 #include "scene.hpp"
+#include "bvh.hpp"
 
 #include <algorithm>
 
@@ -139,6 +140,15 @@ void Scene::bindSSBO(){
             "Failed to bind the ssbos\n"
         );
     }
+
+    // test
+    // fprintf(stderr, "test\n");
+    // BVH bvh{_NbTriangles, triangleGPU, modelsGPU};
+    // bvh._InternalStruct.printIsLeaf();
+    // bvh._InternalStruct.printLeftChild();
+    // bvh._InternalStruct.printRightChild();
+    // bvh._InternalStruct.printParent();
+    // exit(EXIT_SUCCESS);
 }
 
 void Scene::sendDataToGpu(ProgramPtr program){

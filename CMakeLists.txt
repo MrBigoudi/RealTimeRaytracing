@@ -38,6 +38,7 @@ target_compile_options(cflags INTERFACE
 find_package(glfw3 REQUIRED)
 find_package(glm REQUIRED)
 find_package(OpenGL REQUIRED)
+find_package(OpenMP REQUIRED)
 find_package(tinyobjloader REQUIRED)
 
 # Add executable
@@ -47,6 +48,7 @@ add_executable(${PROJECT_NAME} main.cpp)
 target_link_libraries(${PROJECT_NAME} PRIVATE 
     glfw 
     OpenGL
+    OpenMP::OpenMP_CXX
     cflags 
     tinyobjloader
 )

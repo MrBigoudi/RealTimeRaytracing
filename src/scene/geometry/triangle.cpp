@@ -26,6 +26,6 @@ glm::vec3 Triangle::getCentroid(const TriangleGPU& triangle){
     return glm::vec3((1.f/3.f) * (triangle._P0 + triangle._P1 + triangle._P2));
 }
 
-glm::vec3 getCentroid(const TriangleGPU& triangle, const glm::mat4& model){
+glm::vec3 Triangle::getCentroid(const TriangleGPU& triangle, const glm::mat4& model){
     return glm::vec3((1.f/3.f) * model * (triangle._P0 + triangle._P1 + triangle._P2));
 }
