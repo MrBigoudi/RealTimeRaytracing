@@ -2,6 +2,7 @@
 #include "bvh.hpp"
 
 #include <algorithm>
+#include <iostream>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/string_cast.hpp>
@@ -142,13 +143,12 @@ void Scene::bindSSBO(){
     }
 
     // test
-    // fprintf(stderr, "test\n");
-    // BVH bvh{_NbTriangles, triangleGPU, modelsGPU};
-    // bvh._InternalStruct.printIsLeaf();
-    // bvh._InternalStruct.printLeftChild();
-    // bvh._InternalStruct.printRightChild();
-    // bvh._InternalStruct.printParent();
-    // exit(EXIT_SUCCESS);
+    BVH* bvh = new BVH(_NbTriangles, triangleGPU, modelsGPU);
+    bvh->_InternalStruct.printIsLeaf();
+    bvh->_InternalStruct.printLeftChild();
+    bvh->_InternalStruct.printRightChild();
+    bvh->_InternalStruct.printParent();
+    exit(EXIT_SUCCESS);
 }
 
 void Scene::sendDataToGpu(ProgramPtr program){

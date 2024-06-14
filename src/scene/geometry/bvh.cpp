@@ -2,6 +2,9 @@
 #include <algorithm>
 #include <numeric>
 
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/string_cast.hpp>
+
 BVH::BVH(uint32_t nbTriangles,
     const std::array<TriangleGPU, MAX_NB_TRIANGLES>& unsortedTriangles,
     const std::array<MeshModelGPU, MAX_NB_MESHES>& meshesInTheScene){
@@ -261,11 +264,19 @@ std::array<glm::vec3, MAX_NB_TRIANGLES> BVH::getTrianglesCentroids() const{
 std::array<glm::vec3, MAX_NB_TRIANGLES> BVH::getNormalizedCentroids(
             const std::array<glm::vec3, MAX_NB_TRIANGLES>& centroids,
             const AABB_GPU& circumscribedCube) const {
+    fprintf(stdout, "test\n");
+        fflush(stdout);
+        exit(EXIT_SUCCESS);
     std::array<glm::vec3, MAX_NB_TRIANGLES> normalizedCentroids = {};
     for(size_t i=0; i<_InternalStruct._NbTriangles; i++){
-        float normalizedX = (centroids[i].x - circumscribedCube._Min.x) / (circumscribedCube._Max.x - circumscribedCube._Min.x);
-        float normalizedY = (centroids[i].y - circumscribedCube._Min.y) / (circumscribedCube._Max.y - circumscribedCube._Min.y);
-        float normalizedZ = (centroids[i].z - circumscribedCube._Min.z) / (circumscribedCube._Max.z - circumscribedCube._Min.z);
+        float lengthX = (circumscribedCube._Max.x - circumscribedCube._Min.x);
+        float lengthY = (circumscribedCube._Max.y - circumscribedCube._Min.y);
+        float lengthZ = (circumscribedCube._Max.z - circumscribedCube._Min.z);
+        fprintf(stdout, "x = %f, y = %f, z = %f\n", lengthX, lengthY, lengthZ);
+        exit(EXIT_SUCCESS);
+        float normalizedX = (centroids[i].x - circumscribedCube._Min.x) / lengthX;
+        float normalizedY = (centroids[i].y - circumscribedCube._Min.y) / lengthY;
+        float normalizedZ = (centroids[i].z - circumscribedCube._Min.z) / lengthZ;
         normalizedCentroids[i] = glm::vec3(normalizedX, normalizedY, normalizedZ);
     }
     return normalizedCentroids;
@@ -278,6 +289,22 @@ std::array<uint32_t, MAX_NB_TRIANGLES> BVH::getMortonCodes() const {
     AABB_GPU circumscribedCube = getCircumscribedCube(sceneBoundingBox);
     // get the triangle centroids
     std::array<glm::vec3, MAX_NB_TRIANGLES> trianglesCentroids = getTrianglesCentroids();
+
+
+    fprintf(stdout, "%s, %s\n", 
+            glm::to_string(circumscribedCube._Max).c_str(), 
+            glm::to_string(circumscribedCube._Min).c_str()
+        );
+        fprintf(stdout, "test\n");
+    for(uint32_t i=0; i<_InternalStruct._NbTriangles; i++){
+        auto centroid = trianglesCentroids[i];
+        fprintf(stdout, "cen: %s\n", 
+            glm::to_string(centroid).c_str()
+        );
+    }
+    // exit(EXIT_SUCCESS);
+
+
     // normalize the centroids
     std::array<glm::vec3, MAX_NB_TRIANGLES> trianglesNormalizedCentroids = getNormalizedCentroids(trianglesCentroids, circumscribedCube);
     // compute the morton codes
