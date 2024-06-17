@@ -1,7 +1,6 @@
 # Todo list
 
-- gpu bvh
-- change all arrays with vectors
+- send bvh to GPU
 
 - create random sampling
 - add lights
