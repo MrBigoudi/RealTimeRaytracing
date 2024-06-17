@@ -1,5 +1,4 @@
 #include "scene.hpp"
-#include "bvh.hpp"
 
 #include <algorithm>
 #include <iostream>
@@ -46,7 +45,6 @@ std::vector<MaterialGPU> Scene::getMaterialToGPUData() const {
     return materialGPU;
 }
 
-
 void Scene::addMesh(MeshPtr mesh){
     if(_Meshes.size() == MAX_NB_MESHES) return;
     _Meshes.push_back(mesh);
@@ -70,29 +68,41 @@ void Scene::createSSBO(){
     glCreateBuffers(1, &_MaterialsSSBO);
     glCreateBuffers(1, &_TrianglesSSBO);
     glCreateBuffers(1, &_MeshModelsSSBO);
+    glCreateBuffers(1, &_BVH_SSBO);
     assert(_MaterialsSSBO != 0);
     assert(_TrianglesSSBO != 0);
     assert(_MeshModelsSSBO != 0);
+    assert(_BVH_SSBO != 0);
 
     // Calculate the total size of the buffer
     size_t materialsSize = sizeof(MaterialGPU) * MAX_NB_MATERIALS;
     size_t trianglesSize = sizeof(TriangleGPU) * MAX_NB_TRIANGLES;
     size_t modelsSize = sizeof(MeshModelGPU) * MAX_NB_MESHES;
+    size_t bvhSize = (sizeof(BVH_NodeGPU) * ((2*MAX_NB_TRIANGLES)-1)) + (sizeof(uint32_t) * MAX_NB_TRIANGLES);
 
     glNamedBufferStorage(_MaterialsSSBO, 
-                     materialsSize, 
-                     nullptr, 
-                     GL_DYNAMIC_STORAGE_BIT);
+                    materialsSize, 
+                    nullptr, 
+                    GL_DYNAMIC_STORAGE_BIT
+    );
 
     glNamedBufferStorage(_TrianglesSSBO, 
-                     trianglesSize, 
-                     nullptr, 
-                     GL_DYNAMIC_STORAGE_BIT);
+                    trianglesSize, 
+                    nullptr, 
+                    GL_DYNAMIC_STORAGE_BIT
+    );
 
     glNamedBufferStorage(_MeshModelsSSBO, 
-                     modelsSize, 
-                     nullptr, 
-                     GL_DYNAMIC_STORAGE_BIT);
+                    modelsSize, 
+                    nullptr, 
+                    GL_DYNAMIC_STORAGE_BIT
+    );
+
+    glNamedBufferStorage(_BVH_SSBO,
+                    bvhSize,
+                    nullptr,
+                    GL_DYNAMIC_STORAGE_BIT
+    );
 }
 
 void Scene::bindSSBO(){
@@ -132,6 +142,24 @@ void Scene::bindSSBO(){
     );
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, modelsBinding, _MeshModelsSSBO);
 
+    // bvh
+    BVH_Ptr bvh = BVH_Ptr(new BVH(_NbTriangles, triangleGPU, modelsGPU));
+    // bvh->_InternalStruct.printIsLeaf();
+    // bvh->_InternalStruct.printLeftChild();
+    // bvh->_InternalStruct.printRightChild();
+    // bvh->_InternalStruct.printParent();
+    // bvh->_InternalStruct.printTriangleIndices();
+    // bvh->_InternalStruct.printClusters();
+    GLuint bvhBinding = 5;
+    auto bvhNodesGPU = getBVH_NodesToGPUData(bvh);
+    GLsizeiptr bvhNodesSize = sizeof(BVH_NodeGPU) * ((2*_NbTriangles)-1);
+    glNamedBufferSubData(_BVH_SSBO, 
+        0, 
+        bvhNodesSize, 
+        bvhNodesGPU.data()
+    );
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bvhBinding, _BVH_SSBO);
+
     // tests
     if(glGetError() != GL_NO_ERROR){
         ErrorHandler::handle(
@@ -141,15 +169,27 @@ void Scene::bindSSBO(){
             "Failed to bind the ssbos\n"
         );
     }
+}
 
-    // test
-    BVH* bvh = new BVH(_NbTriangles, triangleGPU, modelsGPU);
-    // bvh->_InternalStruct.printIsLeaf();
-    // bvh->_InternalStruct.printLeftChild();
-    // bvh->_InternalStruct.printRightChild();
-    // bvh->_InternalStruct.printParent();
-    // bvh->_InternalStruct.printTriangleIndices();
-    // bvh->_InternalStruct.printClusters();
+void Scene::recursiveTopDownTraversalBVH(std::vector<BVH_NodeGPU>& bvhNodesGPU, BVH_Ptr bvh, uint32_t nodeId) const {
+    BVH_NodeGPU curNode = bvh->_InternalStruct._Clusters[nodeId].value();
+    uint32_t position = bvhNodesGPU.size();
+    bvhNodesGPU.push_back(curNode);
+    if(!bvh->_InternalStruct._IsLeaf[nodeId]){
+        uint32_t leftChildId = bvh->_InternalStruct._LeftChild[nodeId].value();
+        bvhNodesGPU[position]._LeftChild = bvhNodesGPU.size();
+        recursiveTopDownTraversalBVH(bvhNodesGPU, bvh, leftChildId);
+        uint32_t rightChildId = bvh->_InternalStruct._RightChild[nodeId].value();
+        bvhNodesGPU[position]._RightChild = bvhNodesGPU.size();
+        recursiveTopDownTraversalBVH(bvhNodesGPU, bvh, rightChildId);
+    }
+}
+
+std::vector<BVH_NodeGPU> Scene::getBVH_NodesToGPUData(BVH_Ptr bvh) const{
+    std::vector<BVH_NodeGPU> bvhNodesGPU = std::vector<BVH_NodeGPU>();
+    uint32_t rootId = 2*_NbTriangles - 2;
+    recursiveTopDownTraversalBVH(bvhNodesGPU, bvh, rootId);
+    return bvhNodesGPU;
 }
 
 void Scene::sendDataToGpu(ProgramPtr program){

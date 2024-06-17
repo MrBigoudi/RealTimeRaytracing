@@ -39,6 +39,18 @@ struct Hit {
     uint _TriangleId;
 };
 
+struct AABB {
+    vec4 _Min;
+    vec4 _Max;
+};
+
+struct BVH_Node {
+    AABB _BoundingBox;
+    uint _TriangleId;
+    uint _LeftChild;
+    uint _RightChild;
+};
+
 // output
 layout(rgba32f, binding = 0) uniform image2D oImage;
 
@@ -61,6 +73,10 @@ layout (binding = 3, std430) readonly buffer uTrianglesSSBO {
 
 layout (binding = 4, std430) readonly buffer uModelsSSBO {
     Model uModels[];
+};
+
+layout (binding = 5, std430) readonly buffer uBVH_SSBO {
+    BVH_Node uBVH_Nodes[];
 };
 
 

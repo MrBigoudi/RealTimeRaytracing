@@ -5,9 +5,13 @@
 #include <array>
 #include <optional>
 #include <vector>
+#include <memory>
 
 #include "triangle.hpp"
 #include "mesh.hpp"
+
+class BVH;
+using BVH_Ptr = std::shared_ptr<BVH>;
 
 enum Axis {
     X,Y,Z
@@ -27,9 +31,11 @@ class AABB{
 };
 
 struct BVH_NodeGPU {
-    uint32_t _NbTriangles;
-    uint32_t _FirstTriangleIndex;
     AABB_GPU _BoundingBox;
+    uint32_t _TriangleId;
+    uint32_t _LeftChild;
+    uint32_t _RightChild;
+    // if child == 0 then leaf
 };
 
 struct BVH_Params {

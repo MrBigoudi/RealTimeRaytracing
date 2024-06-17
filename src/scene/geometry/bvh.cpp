@@ -23,8 +23,7 @@ PlocParams BVH::plocPreprocessing(){
     for(size_t i=0; i<_InternalStruct._NbTriangles; i++){
         uint32_t triangleIndex = _InternalStruct._TriangleIndices[i];
         BVH_NodeGPU leafCluster{};
-        leafCluster._FirstTriangleIndex = i;
-        leafCluster._NbTriangles = 1;
+        leafCluster._TriangleId = triangleIndex;
         leafCluster._BoundingBox = AABB::buildFromTriangle(_InternalStruct._UnsortedTriangles[triangleIndex]);
         _InternalStruct._Clusters[i] = leafCluster;
         plocParams._C_In[i] = i;
@@ -394,8 +393,6 @@ AABB_GPU AABB::merge(const AABB_GPU& aabb1, const AABB_GPU& aabb2){
 BVH_NodeGPU BVH::mergeBVH_Nodes(const BVH_NodeGPU& node1, const BVH_NodeGPU& node2){
     // TODO: rethink this
     BVH_NodeGPU mergedNode{};
-    mergedNode._NbTriangles = node1._NbTriangles + node2._NbTriangles;
-    mergedNode._FirstTriangleIndex = node1._FirstTriangleIndex;
     mergedNode._BoundingBox = AABB::merge(node1._BoundingBox, node2._BoundingBox);
     return mergedNode;
 }
@@ -469,9 +466,9 @@ void BVH_Params::printClusters() const {
         } else {
             fprintf(
                 stdout,
-                "{nbtri: %u, triId: %u, aabb: (%s, %s)}",
-                _Clusters[i]->_NbTriangles,
-                _Clusters[i]->_FirstTriangleIndex,
+                "{leftChild: %u, triId: %u, aabb: (%s, %s)}",
+                _Clusters[i]->_LeftChild,
+                _Clusters[i]->_TriangleId,
                 glm::to_string(_Clusters[i]->_BoundingBox._Min).c_str(),
                 glm::to_string(_Clusters[i]->_BoundingBox._Max).c_str()
             );

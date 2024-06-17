@@ -1,6 +1,6 @@
 # Todo list
 
-- send bvh to GPU
+- clean scene.[hc]pp
 
 - create random sampling
 - add lights
