@@ -34,21 +34,23 @@ struct BVH_NodeGPU {
 
 struct BVH_Params {
     size_t _NbTriangles;
-    std::array<TriangleGPU, MAX_NB_TRIANGLES> _UnsortedTriangles;
-    std::array<MeshModelGPU, MAX_NB_MESHES> _MeshesInTheScene;
+    std::vector<TriangleGPU> _UnsortedTriangles = std::vector<TriangleGPU>(MAX_NB_TRIANGLES);
+    std::vector<MeshModelGPU> _MeshesInTheScene = std::vector<MeshModelGPU>(MAX_NB_MESHES);
     
     // bvh structure
-    std::array<std::optional<BVH_NodeGPU>, (2*MAX_NB_TRIANGLES)-1> _Clusters{};
-    std::array<bool, (2*MAX_NB_TRIANGLES)-1> _IsLeaf{};
-    std::array<uint32_t, (2*MAX_NB_TRIANGLES)-1> _Parent{};
-    std::array<uint32_t, (2*MAX_NB_TRIANGLES)-1> _LeftChild{};
-    std::array<uint32_t, (2*MAX_NB_TRIANGLES)-1> _RightChild{};
-    std::array<uint32_t, MAX_NB_TRIANGLES> _TriangleIndices{};
+    std::vector<std::optional<BVH_NodeGPU>> _Clusters = std::vector<std::optional<BVH_NodeGPU>>((2*MAX_NB_TRIANGLES)-1, std::nullopt);
+    std::vector<std::optional<bool>> _IsLeaf = std::vector<std::optional<bool>>((2*MAX_NB_TRIANGLES)-1, std::nullopt);
+    std::vector<std::optional<uint32_t>> _Parent = std::vector<std::optional<uint32_t>>((2*MAX_NB_TRIANGLES)-1, std::nullopt);
+    std::vector<std::optional<uint32_t>> _LeftChild = std::vector<std::optional<uint32_t>>((2*MAX_NB_TRIANGLES)-1, std::nullopt);
+    std::vector<std::optional<uint32_t>> _RightChild = std::vector<std::optional<uint32_t>>((2*MAX_NB_TRIANGLES)-1, std::nullopt);
+    std::vector<uint32_t> _TriangleIndices = std::vector<uint32_t>(MAX_NB_TRIANGLES, 0);
 
     void printParent() const;
     void printLeftChild() const;
     void printRightChild() const;
     void printIsLeaf() const;
+    void printTriangleIndices() const;
+    void printClusters() const;
 };
 
 struct PlocParams {
@@ -56,12 +58,18 @@ struct PlocParams {
     uint32_t _NbTotalClusters = 0;
 
     uint32_t _Iteration = 0;
-    std::array<uint32_t, MAX_NB_TRIANGLES> _MortonCodes{};
+    std::vector<uint32_t> _MortonCodes = std::vector<uint32_t>(MAX_NB_TRIANGLES, 0);
 
-    std::array<std::optional<uint32_t>, MAX_NB_TRIANGLES> _C_In{};
-    std::array<std::optional<uint32_t>, MAX_NB_TRIANGLES> _C_Out{};
-    std::array<uint32_t, MAX_NB_TRIANGLES> _NearestNeighborIndices{};
-    std::array<uint32_t, MAX_NB_TRIANGLES> _PrefixScan{};
+    std::vector<std::optional<uint32_t>> _C_In = std::vector<std::optional<uint32_t>>(MAX_NB_TRIANGLES, std::nullopt);
+    std::vector<std::optional<uint32_t>> _C_Out = std::vector<std::optional<uint32_t>>(MAX_NB_TRIANGLES, std::nullopt);
+    std::vector<uint32_t> _NearestNeighborIndices = std::vector<uint32_t>(MAX_NB_TRIANGLES);
+    std::vector<uint32_t> _PrefixScan = std::vector<uint32_t>(MAX_NB_TRIANGLES);
+
+    void printMortonCodes() const;
+    void printC_In() const;
+    void printC_Out() const;
+    void printNearestNeighborIndices() const;
+    void printPrefixScan() const;
 };
 
 class BVH {
@@ -70,31 +78,31 @@ class BVH {
 
     public:
         BVH(uint32_t nbTriangles,
-            const std::array<TriangleGPU, MAX_NB_TRIANGLES>& unsortedTriangles,
-            const std::array<MeshModelGPU, MAX_NB_MESHES>& meshesInTheScene);
+            const std::vector<TriangleGPU>& unsortedTriangles,
+            const std::vector<MeshModelGPU>& meshesInTheScene);
 
     private:
         static BVH_NodeGPU mergeBVH_Nodes(const BVH_NodeGPU& node1, const BVH_NodeGPU& node2);
 
     private:
-        std::array<uint32_t, MAX_NB_TRIANGLES> getMortonCodes() const;
+        std::vector<uint32_t> getMortonCodes() const;
 
         AABB_GPU getSceneAABB() const;
 
         AABB_GPU getCircumscribedCube(const AABB_GPU& sceneAABB) const;
 
-        std::array<glm::vec3, MAX_NB_TRIANGLES> getTrianglesCentroids() const;
+        std::vector<glm::vec3> getTrianglesCentroids() const;
 
-        std::array<glm::vec3, MAX_NB_TRIANGLES> getNormalizedCentroids(
-            const std::array<glm::vec3, MAX_NB_TRIANGLES>& centroids,
+        std::vector<glm::vec3> getNormalizedCentroids(
+            const std::vector<glm::vec3>& centroids,
             const AABB_GPU& circumscribedCube) const; 
 
         uint32_t expandBits(uint32_t value) const;
         uint32_t morton3D(const glm::vec3& point) const;
 
         void sortMortonCodesAndTriangleIndices(
-            std::array<uint32_t, MAX_NB_TRIANGLES>& triangleIndices, // empty
-            std::array<uint32_t, MAX_NB_TRIANGLES>& mortonCodes // empty
+            std::vector<uint32_t>& triangleIndices, // empty
+            std::vector<uint32_t>& mortonCodes // empty
         ) const;
 
 
@@ -103,5 +111,5 @@ class BVH {
         void plocNearestNeighborSearch(PlocParams& plocParams, uint32_t index);
         void plocMerging(PlocParams& plocParams, uint32_t index);
         void plocCompaction(PlocParams& plocParams, uint32_t index);
-        void plocPrefixScan(PlocParams& plocParams, uint32_t index);
+        void plocPrefixScan(PlocParams& plocParams);
 };

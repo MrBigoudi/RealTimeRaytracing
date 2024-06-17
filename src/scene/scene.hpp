@@ -33,9 +33,9 @@ class Scene{
         Scene();
 
     public:
-        std::array<TriangleGPU, MAX_NB_TRIANGLES> getTriangleToGPUData() const;
-        std::array<MaterialGPU, MAX_NB_MATERIALS> getMaterialToGPUData() const;
-        std::array<MeshModelGPU, MAX_NB_MESHES> getMeshModelToGPUData() const;
+        std::vector<TriangleGPU> getTriangleToGPUData() const;
+        std::vector<MaterialGPU> getMaterialToGPUData() const;
+        std::vector<MeshModelGPU> getMeshModelToGPUData() const;
 
         void addMesh(MeshPtr mesh);
         void addMaterial(const glm::vec4& color);

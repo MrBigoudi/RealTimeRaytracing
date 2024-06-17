@@ -6,8 +6,8 @@
 #include <glm/gtx/string_cast.hpp>
 
 BVH::BVH(uint32_t nbTriangles,
-    const std::array<TriangleGPU, MAX_NB_TRIANGLES>& unsortedTriangles,
-    const std::array<MeshModelGPU, MAX_NB_MESHES>& meshesInTheScene){
+    const std::vector<TriangleGPU>& unsortedTriangles,
+    const std::vector<MeshModelGPU>& meshesInTheScene){
     // init parameters
     _InternalStruct._NbTriangles = nbTriangles;
     _InternalStruct._UnsortedTriangles = unsortedTriangles;
@@ -20,7 +20,6 @@ BVH::BVH(uint32_t nbTriangles,
 PlocParams BVH::plocPreprocessing(){
     PlocParams plocParams{};
     sortMortonCodesAndTriangleIndices(_InternalStruct._TriangleIndices, plocParams._MortonCodes);
-    _InternalStruct._IsLeaf.fill(false);
     for(size_t i=0; i<_InternalStruct._NbTriangles; i++){
         uint32_t triangleIndex = _InternalStruct._TriangleIndices[i];
         BVH_NodeGPU leafCluster{};
@@ -29,7 +28,7 @@ PlocParams BVH::plocPreprocessing(){
         leafCluster._BoundingBox = AABB::buildFromTriangle(_InternalStruct._UnsortedTriangles[triangleIndex]);
         _InternalStruct._Clusters[i] = leafCluster;
         plocParams._C_In[i] = i;
-        plocParams._C_Out[i] = i;
+        plocParams._C_Out[i].reset();
         _InternalStruct._IsLeaf[i] = true;
     }
     plocParams._Iteration = _InternalStruct._NbTriangles;
@@ -42,87 +41,119 @@ void BVH::ploc(){
     /// cf papers/ploc.pdf
     // preprocessing
     PlocParams plocParams = plocPreprocessing();
+    // fprintf(stdout, "preprocessing done\n");
+    // plocParams.printMortonCodes();
+    // _InternalStruct.printTriangleIndices();
+    // _InternalStruct.printClusters();
+
+    // debug
+    // int cpt = 0;
+
     // main loop
     while(plocParams._Iteration > 1) {
+        // fprintf(stdout, "\niteration: %d\n", plocParams._Iteration);
+        // plocParams.printC_In();
         // nearest neighbor search
         #pragma omp parallel for
         for(uint32_t i=0; i<plocParams._Iteration; i++){
             plocNearestNeighborSearch(plocParams, i);
         }
+        // fprintf(stdout, "\nnearest neighbors done\n");
+        // plocParams.printNearestNeighborIndices();
         
         // merging
         #pragma omp parallel for
         for(uint32_t i=0; i<plocParams._Iteration; i++){
             plocMerging(plocParams, i);
         }
+        // fprintf(stdout, "\nmerging done\n");
+        // plocParams.printC_In();
+        // _InternalStruct.printIsLeaf();
+        // _InternalStruct.printLeftChild();
+        // _InternalStruct.printRightChild();
+        // _InternalStruct.printParent();
+        // _InternalStruct.printClusters();
         
         // compaction
+        plocPrefixScan(plocParams);
+        // fprintf(stdout, "\nprefix scan done\n");
+        // plocParams.printPrefixScan();
         #pragma omp parallel for
         for(uint32_t i=0; i<plocParams._Iteration; i++){
             plocCompaction(plocParams, i);
         }
+        // fprintf(stdout, "\ncompaction done\n");
+        // plocParams.printC_Out();
 
         #pragma omp single
         {
-            plocParams._Iteration = plocParams._PrefixScan[plocParams._Iteration-1];
             if(plocParams._C_In[plocParams._Iteration-1].has_value()){
-                plocParams._Iteration++;
+                plocParams._Iteration = plocParams._PrefixScan[plocParams._Iteration-1] + 1;
+            } else {
+                plocParams._Iteration = plocParams._PrefixScan[plocParams._Iteration-1];
             }
             std::swap(plocParams._C_In, plocParams._C_Out);
         }
+        // fprintf(stdout, "\nreinit loop done\n");
+        // plocParams.printC_In();
+        // plocParams.printC_Out();
+        // fprintf(stdout, "new iteration: %u\n", plocParams._Iteration);
+        // if(cpt>=6){exit(EXIT_SUCCESS);}
+
+        // debug
+        // cpt++;
     }
 }
 
-void BVH::plocPrefixScan(PlocParams& plocParams, uint32_t index){
+void BVH::plocPrefixScan(PlocParams& plocParams){
+    // Hillis Steele Scan    
     uint32_t n = plocParams._Iteration;
 
-    // Initialize local storage for this thread's contributions
-    std::vector<uint32_t> localContributions(n, 0);
-
-    // Each thread contributes to its local value
-    localContributions[index] = plocParams._C_In[index].has_value() ? 1 : 0;
-
-    // Prefix scan using OpenMP (up-sweep phase)
-    for (uint32_t d = 1; d < n; d <<= 1) {
-        uint32_t temp = localContributions[index];
-        if (index >= d) {
-            temp += localContributions[index - d];
-        }
-        #pragma omp barrier
-        localContributions[index] = temp;
-        #pragma omp barrier
+    // init the output array
+    #pragma omp parallel for
+    for(uint32_t i=1; i<n; i++){
+        plocParams._PrefixScan[i] = (plocParams._C_In[i-1].has_value()?1:0);
     }
 
-    // Ensure prefix sum array is updated correctly in a single pass
-    #pragma omp single
-    {
-        plocParams._PrefixScan[0] = 0;
-        for (uint32_t i = 1; i < n; ++i) {
-            plocParams._PrefixScan[i] = localContributions[i - 1];
+    // up phase
+    std::vector<uint32_t> temp = std::vector<uint32_t>(n, 0);
+    for(int step=1; step<static_cast<int>(n); step*=2){
+        #pragma omp parallel for
+        for(int i=step; i<static_cast<int>(n); i++){
+            temp[i] = plocParams._PrefixScan[i] + plocParams._PrefixScan[i-step];
+        }
+        #pragma omp parallel for
+        for(int i=step; i<static_cast<int>(n); i++){
+            plocParams._PrefixScan[i] = temp[i];
+            temp[i] = 0;
         }
     }
 }
 
 void BVH::plocCompaction(PlocParams& plocParams, uint32_t index){
-    plocPrefixScan(plocParams, index);
     // Compaction phase: write valid clusters to their new positions
     if (plocParams._C_In[index].has_value()) {
         uint32_t newIndex = plocParams._PrefixScan[index];
-        plocParams._C_Out[newIndex] = plocParams._C_In[index];
+        plocParams._C_Out[newIndex] = plocParams._C_In[index].value();
     }
 }
 
 
 void BVH::plocMerging(PlocParams& plocParams, uint32_t index){
+    uint32_t neighborIndex = plocParams._NearestNeighborIndices[index];
     // if nearest neighbors of two clusters mutually corresond
-    if(plocParams._NearestNeighborIndices[plocParams._NearestNeighborIndices[index]] == index){
+    if(plocParams._NearestNeighborIndices[neighborIndex] == index){
         // to avoid conflicts, only merging on the lower index
-        if(index < plocParams._NearestNeighborIndices[index]){
+        if(index < neighborIndex){
+            // for global clusters arrays
             uint32_t ci = plocParams._C_In[index].value();
-            uint32_t ciNeighbor = plocParams._C_In[plocParams._NearestNeighborIndices[index]].value();
+            uint32_t ciNeighbor = plocParams._C_In[neighborIndex].value();
 
             // update new clusters
-            BVH_NodeGPU mergedNode = BVH::mergeBVH_Nodes(_InternalStruct._Clusters[ci].value(), _InternalStruct._Clusters[ciNeighbor].value());
+            BVH_NodeGPU mergedNode = BVH::mergeBVH_Nodes(
+                _InternalStruct._Clusters[ci].value(), 
+                _InternalStruct._Clusters[ciNeighbor].value()
+            );
             uint32_t newClusterIndex = 0;
             #pragma omp critical
             {
@@ -136,8 +167,8 @@ void BVH::plocMerging(PlocParams& plocParams, uint32_t index){
             _InternalStruct._Parent[ciNeighbor] = newClusterIndex;
 
             // mark merged cluster as invalid
-            plocParams._C_In[ciNeighbor].reset();
-            plocParams._C_In[ci] = newClusterIndex;
+            plocParams._C_In[neighborIndex].reset();
+            plocParams._C_In[index] = newClusterIndex;
         }
     }
 }
@@ -145,13 +176,15 @@ void BVH::plocMerging(PlocParams& plocParams, uint32_t index){
 void BVH::plocNearestNeighborSearch(PlocParams& plocParams, uint32_t index){
     float minDist = INFINITY;
     BVH_NodeGPU currentIndexCluster = _InternalStruct._Clusters[plocParams._C_In[index].value()].value();
-    uint32_t startIndex = static_cast<uint32_t>(std::max(static_cast<uint32_t>(0), index-plocParams._SEARCH_RADIUS));
+    uint32_t startIndex = static_cast<uint32_t>(std::max(0, static_cast<int>(index)-static_cast<int>(plocParams._SEARCH_RADIUS)));
     uint32_t endIndex = static_cast<uint32_t>(std::min(index+plocParams._SEARCH_RADIUS+1, plocParams._Iteration));
+    // fprintf(stdout, "start index: %u, end index: %u\n", startIndex, endIndex);
     for(uint32_t j=startIndex; j<endIndex; j++){
         if(j == index){continue;}
         BVH_NodeGPU jIndexCluster = _InternalStruct._Clusters[plocParams._C_In[j].value()].value();
         AABB_GPU newAABB = AABB::merge(currentIndexCluster._BoundingBox, jIndexCluster._BoundingBox);
         float curDist = AABB::getSurfaceArea(newAABB);
+        // fprintf(stdout, "i: %u, j: %u, dist: %f, minDist: %f\n", index, j, curDist, minDist);
         if(curDist < minDist){
             minDist = curDist;
             plocParams._NearestNeighborIndices[index] = j;
@@ -162,8 +195,8 @@ void BVH::plocNearestNeighborSearch(PlocParams& plocParams, uint32_t index){
 
 
 void BVH::sortMortonCodesAndTriangleIndices(
-            std::array<uint32_t, MAX_NB_TRIANGLES>& triangleIndices,
-            std::array<uint32_t, MAX_NB_TRIANGLES>& mortonCodes
+            std::vector<uint32_t>& triangleIndices,
+            std::vector<uint32_t>& mortonCodes
         ) const {
     // generate triangle indices
     std::iota(triangleIndices.begin(), triangleIndices.end(), 0);
@@ -252,8 +285,8 @@ AABB_GPU BVH::getCircumscribedCube(const AABB_GPU& sceneAABB) const {
     return circumscribedCube;
 }
 
-std::array<glm::vec3, MAX_NB_TRIANGLES> BVH::getTrianglesCentroids() const{
-    std::array<glm::vec3, MAX_NB_TRIANGLES> centroids = {};
+std::vector<glm::vec3> BVH::getTrianglesCentroids() const{
+    std::vector<glm::vec3> centroids = std::vector<glm::vec3>(MAX_NB_TRIANGLES, glm::vec3(0.f));
     for(size_t i=0; i<_InternalStruct._NbTriangles; i++){
         TriangleGPU triangle = _InternalStruct._UnsortedTriangles[i];
         centroids[i] = Triangle::getCentroid(triangle, _InternalStruct._MeshesInTheScene[triangle._ModelId]._ModelMatrix);
@@ -261,19 +294,14 @@ std::array<glm::vec3, MAX_NB_TRIANGLES> BVH::getTrianglesCentroids() const{
     return centroids;
 }
 
-std::array<glm::vec3, MAX_NB_TRIANGLES> BVH::getNormalizedCentroids(
-            const std::array<glm::vec3, MAX_NB_TRIANGLES>& centroids,
+std::vector<glm::vec3> BVH::getNormalizedCentroids(
+            const std::vector<glm::vec3>& centroids,
             const AABB_GPU& circumscribedCube) const {
-    fprintf(stdout, "test\n");
-        fflush(stdout);
-        exit(EXIT_SUCCESS);
-    std::array<glm::vec3, MAX_NB_TRIANGLES> normalizedCentroids = {};
+    std::vector<glm::vec3> normalizedCentroids = std::vector<glm::vec3>(MAX_NB_TRIANGLES, glm::vec3(0.f));
     for(size_t i=0; i<_InternalStruct._NbTriangles; i++){
         float lengthX = (circumscribedCube._Max.x - circumscribedCube._Min.x);
         float lengthY = (circumscribedCube._Max.y - circumscribedCube._Min.y);
         float lengthZ = (circumscribedCube._Max.z - circumscribedCube._Min.z);
-        fprintf(stdout, "x = %f, y = %f, z = %f\n", lengthX, lengthY, lengthZ);
-        exit(EXIT_SUCCESS);
         float normalizedX = (centroids[i].x - circumscribedCube._Min.x) / lengthX;
         float normalizedY = (centroids[i].y - circumscribedCube._Min.y) / lengthY;
         float normalizedZ = (centroids[i].z - circumscribedCube._Min.z) / lengthZ;
@@ -282,33 +310,18 @@ std::array<glm::vec3, MAX_NB_TRIANGLES> BVH::getNormalizedCentroids(
     return normalizedCentroids;
 }
 
-std::array<uint32_t, MAX_NB_TRIANGLES> BVH::getMortonCodes() const {
+std::vector<uint32_t> BVH::getMortonCodes() const {
     // get scene AABB
     AABB_GPU sceneBoundingBox = getSceneAABB();
     // build circumscribed cube
     AABB_GPU circumscribedCube = getCircumscribedCube(sceneBoundingBox);
     // get the triangle centroids
-    std::array<glm::vec3, MAX_NB_TRIANGLES> trianglesCentroids = getTrianglesCentroids();
-
-
-    fprintf(stdout, "%s, %s\n", 
-            glm::to_string(circumscribedCube._Max).c_str(), 
-            glm::to_string(circumscribedCube._Min).c_str()
-        );
-        fprintf(stdout, "test\n");
-    for(uint32_t i=0; i<_InternalStruct._NbTriangles; i++){
-        auto centroid = trianglesCentroids[i];
-        fprintf(stdout, "cen: %s\n", 
-            glm::to_string(centroid).c_str()
-        );
-    }
-    // exit(EXIT_SUCCESS);
-
+    std::vector<glm::vec3> trianglesCentroids = getTrianglesCentroids();
 
     // normalize the centroids
-    std::array<glm::vec3, MAX_NB_TRIANGLES> trianglesNormalizedCentroids = getNormalizedCentroids(trianglesCentroids, circumscribedCube);
+    std::vector<glm::vec3> trianglesNormalizedCentroids = getNormalizedCentroids(trianglesCentroids, circumscribedCube);
     // compute the morton codes
-    std::array<uint32_t, MAX_NB_TRIANGLES> mortonCodes{};
+    std::vector<uint32_t> mortonCodes = std::vector<uint32_t>(MAX_NB_TRIANGLES, 0);
     for(size_t i=0; i<_InternalStruct._NbTriangles; i++){
         glm::vec3 centroid = trianglesNormalizedCentroids[i];
         uint32_t code = morton3D(centroid);
@@ -390,8 +403,12 @@ BVH_NodeGPU BVH::mergeBVH_Nodes(const BVH_NodeGPU& node1, const BVH_NodeGPU& nod
 
 void BVH_Params::printParent() const {
     fprintf(stdout, "Parent Array:\n[ ");
-    for(size_t i = 0; i < (2 * MAX_NB_TRIANGLES) - 1; ++i) {
-        fprintf(stdout, "%u", _Parent[i]);
+    for(size_t i = 0; i < (2 * MAX_NB_TRIANGLES) - 1; i++) {
+        if(_Parent[i].has_value()){
+            fprintf(stdout, "%u", _Parent[i].value());
+        } else {
+            fprintf(stdout, "null");
+        }
         if (i < (2 * MAX_NB_TRIANGLES) - 2) {
             fprintf(stdout, ", ");
         }
@@ -401,8 +418,12 @@ void BVH_Params::printParent() const {
 
 void BVH_Params::printLeftChild() const {
     fprintf(stdout, "LeftChild Array:\n[ ");
-    for(size_t i = 0; i < (2 * MAX_NB_TRIANGLES) - 1; ++i) {
-        fprintf(stdout, "%u", _LeftChild[i]);
+    for(size_t i = 0; i < (2 * MAX_NB_TRIANGLES) - 1; i++) {
+        if(_LeftChild[i].has_value()){
+            fprintf(stdout, "%u", _LeftChild[i].value());
+        } else {
+            fprintf(stdout, "null");
+        }
         if (i < (2 * MAX_NB_TRIANGLES) - 2) {
             fprintf(stdout, ", ");
         }
@@ -412,8 +433,12 @@ void BVH_Params::printLeftChild() const {
 
 void BVH_Params::printRightChild() const {
     fprintf(stdout, "RightChild Array:\n[ ");
-    for(size_t i = 0; i < (2 * MAX_NB_TRIANGLES) - 1; ++i) {
-        fprintf(stdout, "%u", _RightChild[i]);
+    for(size_t i = 0; i < (2 * MAX_NB_TRIANGLES) - 1; i++) {
+        if(_RightChild[i].has_value()){
+            fprintf(stdout, "%u", _RightChild[i].value());
+        } else {
+            fprintf(stdout, "null");
+        }
         if (i < (2 * MAX_NB_TRIANGLES) - 2) {
             fprintf(stdout, ", ");
         }
@@ -423,9 +448,109 @@ void BVH_Params::printRightChild() const {
 
 void BVH_Params::printIsLeaf() const {
     fprintf(stdout, "IsLeaf Array:\n[ ");
-    for(size_t i = 0; i < (2 * MAX_NB_TRIANGLES) - 1; ++i) {
-        fprintf(stdout, "%s", _IsLeaf[i] ? "true" : "false");
+    for(size_t i = 0; i < (2 * MAX_NB_TRIANGLES) - 1; i++) {
+        if(_IsLeaf[i].has_value()){
+            fprintf(stdout, "%s", _IsLeaf[i].value() ? "true" : "false");
+        } else {
+            fprintf(stdout, "null");
+        }
         if (i < (2 * MAX_NB_TRIANGLES) - 2) {
+            fprintf(stdout, ", ");
+        }
+    }
+    fprintf(stdout, " ]\n");
+}
+
+void BVH_Params::printClusters() const {
+    fprintf(stdout, "Clusters Array:\n[\n ");
+    for(size_t i = 0; i < (2 * MAX_NB_TRIANGLES) - 1; i++) {
+        if(!_Clusters[i].has_value()){
+            fprintf(stdout, "null");
+        } else {
+            fprintf(
+                stdout,
+                "{nbtri: %u, triId: %u, aabb: (%s, %s)}",
+                _Clusters[i]->_NbTriangles,
+                _Clusters[i]->_FirstTriangleIndex,
+                glm::to_string(_Clusters[i]->_BoundingBox._Min).c_str(),
+                glm::to_string(_Clusters[i]->_BoundingBox._Max).c_str()
+            );
+        }
+        if (i < (2 * MAX_NB_TRIANGLES) - 2) {
+            fprintf(stdout, ",\n ");
+        }
+    }
+    fprintf(stdout, "\n]\n");
+}
+
+void BVH_Params::printTriangleIndices() const {
+    fprintf(stdout, "Triangle indices Array:\n[ ");
+    for(size_t i = 0; i < MAX_NB_TRIANGLES; i++) {
+        fprintf(stdout, "%u", _TriangleIndices[i]);
+        if (i < (MAX_NB_TRIANGLES) - 1) {
+            fprintf(stdout, ", ");
+        }
+    }
+    fprintf(stdout, " ]\n");
+}
+
+void PlocParams::printMortonCodes() const {
+    fprintf(stdout, "MortonCodes Array:\n[ ");
+    for(size_t i = 0; i < _MortonCodes.size(); i++) {
+        fprintf(stdout, "%u", _MortonCodes[i]);
+        if (i < _MortonCodes.size() - 1) {
+            fprintf(stdout, ", ");
+        }
+    }
+    fprintf(stdout, " ]\n");
+}
+
+void PlocParams::printC_In() const {
+    fprintf(stdout, "C_In Array:\n[ ");
+    for(size_t i = 0; i < _C_In.size(); i++) {
+        if (_C_In[i]) {
+            fprintf(stdout, "%u", _C_In[i].value());
+        } else {
+            fprintf(stdout, "null");
+        }
+        if (i < _C_In.size() - 1) {
+            fprintf(stdout, ", ");
+        }
+    }
+    fprintf(stdout, " ]\n");
+}
+
+void PlocParams::printC_Out() const {
+    fprintf(stdout, "C_Out Array:\n[ ");
+    for(size_t i = 0; i < _C_Out.size(); i++) {
+        if (_C_Out[i]) {
+            fprintf(stdout, "%u", _C_Out[i].value());
+        } else {
+            fprintf(stdout, "null");
+        }
+        if (i < _C_Out.size() - 1) {
+            fprintf(stdout, ", ");
+        }
+    }
+    fprintf(stdout, " ]\n");
+}
+
+void PlocParams::printNearestNeighborIndices() const {
+    fprintf(stdout, "NearestNeighborIndices Array:\n[ ");
+    for(size_t i = 0; i < _NearestNeighborIndices.size(); i++) {
+        fprintf(stdout, "%u", _NearestNeighborIndices[i]);
+        if (i < _NearestNeighborIndices.size() - 1) {
+            fprintf(stdout, ", ");
+        }
+    }
+    fprintf(stdout, " ]\n");
+}
+
+void PlocParams::printPrefixScan() const {
+    fprintf(stdout, "PrefixScan Array:\n[ ");
+    for(size_t i = 0; i < _PrefixScan.size(); i++) {
+        fprintf(stdout, "%u", _PrefixScan[i]);
+        if (i < _PrefixScan.size() - 1) {
             fprintf(stdout, ", ");
         }
     }

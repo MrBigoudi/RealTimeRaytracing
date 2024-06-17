@@ -13,8 +13,8 @@ Scene::Scene(){
     createSSBO();
 }
 
-std::array<MeshModelGPU, MAX_NB_MESHES> Scene::getMeshModelToGPUData() const {
-    std::array<MeshModelGPU, MAX_NB_MESHES> modelsGPU{};
+std::vector<MeshModelGPU> Scene::getMeshModelToGPUData() const {
+    std::vector<MeshModelGPU> modelsGPU = std::vector<MeshModelGPU>(MAX_NB_MESHES);
     for(int i=0; i<std::min(static_cast<int>(_Meshes.size()), MAX_NB_MESHES); i++){
         modelsGPU[i] = _Meshes[i]->_InternalStruct;
     }
@@ -22,8 +22,8 @@ std::array<MeshModelGPU, MAX_NB_MESHES> Scene::getMeshModelToGPUData() const {
 }
 
 
-std::array<TriangleGPU, MAX_NB_TRIANGLES> Scene::getTriangleToGPUData() const {
-    std::array<TriangleGPU, MAX_NB_TRIANGLES> trianglesGPU{};
+std::vector<TriangleGPU> Scene::getTriangleToGPUData() const {
+    std::vector<TriangleGPU> trianglesGPU = std::vector<TriangleGPU>(MAX_NB_TRIANGLES);
     uint32_t i = 0;
     for(MeshPtr mesh : _Meshes){
         for(Triangle triangle : mesh->_Triangles){
@@ -38,8 +38,8 @@ std::array<TriangleGPU, MAX_NB_TRIANGLES> Scene::getTriangleToGPUData() const {
     return trianglesGPU;
 }
 
-std::array<MaterialGPU, MAX_NB_MATERIALS> Scene::getMaterialToGPUData() const {
-    std::array<MaterialGPU, MAX_NB_MATERIALS> materialGPU{};
+std::vector<MaterialGPU> Scene::getMaterialToGPUData() const {
+    std::vector<MaterialGPU> materialGPU = std::vector<MaterialGPU>(MAX_NB_MATERIALS);
     for(int i=0; i<std::min(static_cast<int>(_Materials.size()), MAX_NB_MATERIALS); i++){
         materialGPU[i] = _Materials[i]._InternalStruct;
     }
@@ -144,11 +144,12 @@ void Scene::bindSSBO(){
 
     // test
     BVH* bvh = new BVH(_NbTriangles, triangleGPU, modelsGPU);
-    bvh->_InternalStruct.printIsLeaf();
-    bvh->_InternalStruct.printLeftChild();
-    bvh->_InternalStruct.printRightChild();
-    bvh->_InternalStruct.printParent();
-    exit(EXIT_SUCCESS);
+    // bvh->_InternalStruct.printIsLeaf();
+    // bvh->_InternalStruct.printLeftChild();
+    // bvh->_InternalStruct.printRightChild();
+    // bvh->_InternalStruct.printParent();
+    // bvh->_InternalStruct.printTriangleIndices();
+    // bvh->_InternalStruct.printClusters();
 }
 
 void Scene::sendDataToGpu(ProgramPtr program){
