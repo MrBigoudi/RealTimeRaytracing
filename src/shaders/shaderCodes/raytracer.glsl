@@ -155,7 +155,6 @@ void getColor(Hit hit, inout vec4 color){
 
 
 uint intersectBVH(Ray ray, BVH_Node node){
-    return 1;
     float tMin = 0.f;
     float tMax = -1.f;
 
@@ -212,7 +211,7 @@ Hit getClosestHitBVH(Ray ray, uint rootBvh){
     closestHit._DidHit = 0;
 
     // Create a stack for the node indices
-    uint stack[8192];
+    uint stack[1024];
     int stackIndex = 0;
     // Push the root node onto the stack
     stack[stackIndex++] = rootBvh;
@@ -252,11 +251,15 @@ void main() {
 
     Ray ray = getRay(pixelPos);
 
+    // // no bvh
     // Hit closestHit;
     // closestHit._DidHit = 0;
     // getAllHits(ray, uNbTriangles, closestHit);
+
+    // bvh
     uint rootBvh = 0;
     Hit closestHit = getClosestHitBVH(ray, rootBvh);
+
     getColor(closestHit, value);
 
     // BVH_Node root = uBVH_Nodes[rootBvh];

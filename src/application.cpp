@@ -173,7 +173,8 @@ void Application::initScene() {
     _Scene->addMaterial({0.2, 0.3, 0.1, 1.});
 
     // load model
-    MeshPtr model = Mesh::load(Mesh::MODELS_DIRECTORY + "teapot.obj");
+    // MeshPtr model = Mesh::load(Mesh::MODELS_DIRECTORY + "teapot.obj");
+    MeshPtr model = Mesh::load(Mesh::MODELS_DIRECTORY + "suzanne.obj");
     model->setMaterial(1);
     _Scene->addMesh(model);
 

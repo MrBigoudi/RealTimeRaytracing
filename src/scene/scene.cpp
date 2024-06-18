@@ -143,15 +143,15 @@ void Scene::bindSSBO(){
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, modelsBinding, _MeshModelsSSBO);
 
     // bvh
-    BVH_Ptr bvh = BVH_Ptr(new BVH(_NbTriangles, triangleGPU, modelsGPU));
-    // bvh->_InternalStruct.printIsLeaf();
-    // bvh->_InternalStruct.printLeftChild();
-    // bvh->_InternalStruct.printRightChild();
-    // bvh->_InternalStruct.printParent();
-    // bvh->_InternalStruct.printTriangleIndices();
-    // bvh->_InternalStruct.printClusters();
+    _BVH = BVH_Ptr(new BVH(_NbTriangles, triangleGPU, modelsGPU));
+    // _BVH->_InternalStruct.printIsLeaf();
+    // _BVH->_InternalStruct.printLeftChild();
+    // _BVH->_InternalStruct.printRightChild();
+    // _BVH->_InternalStruct.printParent();
+    // _BVH->_InternalStruct.printTriangleIndices();
+    // _BVH->_InternalStruct.printClusters();
     GLuint bvhBinding = 5;
-    auto bvhNodesGPU = getBVH_NodesToGPUData(bvh);
+    auto bvhNodesGPU = getBVH_NodesToGPUData(_BVH);
     // fprintf(stdout, "to send to the GPU:\n");
     // for(auto node : bvhNodesGPU){
     //     fprintf(

@@ -4,3 +4,4 @@ build
 .cache
 vg*
 out.txt
+log.txt

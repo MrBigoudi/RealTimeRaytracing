@@ -1,4 +1,5 @@
 #include "bvh.hpp"
+#include <GLFW/glfw3.h>
 #include <algorithm>
 #include <numeric>
 
@@ -12,9 +13,12 @@ BVH::BVH(uint32_t nbTriangles,
     _InternalStruct._NbTriangles = nbTriangles;
     _InternalStruct._UnsortedTriangles = unsortedTriangles;
     _InternalStruct._MeshesInTheScene = meshesInTheScene;
+    // fprintf(stdout, "test\n");
 
     // ploc algorithm
+    // auto start = glfwGetTime();
     ploc();
+    // fprintf(stdout, "\nploc: %f ms\n", 1000*(glfwGetTime()-start));
 }
 
 PlocParams BVH::plocPreprocessing(){
@@ -56,19 +60,23 @@ void BVH::ploc(){
     while(plocParams._Iteration > 1) {
         // fprintf(stdout, "\niteration: %d\n", plocParams._Iteration);
         // plocParams.printC_In();
+        // auto start = glfwGetTime();
         // nearest neighbor search
         #pragma omp parallel for
         for(uint32_t i=0; i<plocParams._Iteration; i++){
             plocNearestNeighborSearch(plocParams, i);
         }
+        // fprintf(stdout, "nearest neighbor search: %f ms\n", 1000*(glfwGetTime()-start));
         // fprintf(stdout, "\nnearest neighbors done\n");
         // plocParams.printNearestNeighborIndices();
         
+        // start = glfwGetTime();
         // merging
         #pragma omp parallel for
         for(uint32_t i=0; i<plocParams._Iteration; i++){
             plocMerging(plocParams, i);
         }
+        // fprintf(stdout, "merging: %f ms\n", 1000*(glfwGetTime()-start));
         // fprintf(stdout, "\nmerging done\n");
         // plocParams.printC_In();
         // _InternalStruct.printIsLeaf();
@@ -77,16 +85,20 @@ void BVH::ploc(){
         // _InternalStruct.printParent();
         // _InternalStruct.printClusters();
         
+        // start = glfwGetTime();
         // compaction
         plocPrefixScan(plocParams);
         // fprintf(stdout, "\nprefix scan done\n");
         // plocParams.printPrefixScan();
+        // fprintf(stdout, "prefix scan: %f ms\n", 1000*(glfwGetTime()-start));
+        // start = glfwGetTime();
         #pragma omp parallel for
         for(uint32_t i=0; i<plocParams._Iteration; i++){
             plocCompaction(plocParams, i);
         }
         // fprintf(stdout, "\ncompaction done\n");
         // plocParams.printC_Out();
+        // fprintf(stdout, "compaction: %f ms\n", 1000*(glfwGetTime()-start));
 
         #pragma omp single
         {

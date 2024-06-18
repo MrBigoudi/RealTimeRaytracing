@@ -31,6 +31,9 @@ class Scene{
         uint32_t _NbMaterials = 1; // the default one
         uint32_t _NbMeshes = 0;
 
+        // tmp
+        BVH_Ptr _BVH = nullptr;
+
     public:
         Scene();
 
