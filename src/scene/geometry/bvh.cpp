@@ -24,7 +24,11 @@ PlocParams BVH::plocPreprocessing(){
         uint32_t triangleIndex = _InternalStruct._TriangleIndices[i];
         BVH_NodeGPU leafCluster{};
         leafCluster._TriangleId = triangleIndex;
-        leafCluster._BoundingBox = AABB::buildFromTriangle(_InternalStruct._UnsortedTriangles[triangleIndex]);
+        TriangleGPU curTriangle = _InternalStruct._UnsortedTriangles[triangleIndex];
+        leafCluster._BoundingBox = AABB::buildFromTriangle(
+            curTriangle,
+            _InternalStruct._MeshesInTheScene[curTriangle._ModelId]
+        );
         _InternalStruct._Clusters[i] = leafCluster;
         plocParams._C_In[i] = i;
         plocParams._C_Out[i].reset();
@@ -362,16 +366,20 @@ float AABB::getSurfaceArea(const AABB_GPU& aabb){
     return 2 * (diff.x * diff.y + diff.y * diff.z + diff.z * diff.x);
 }
 
-AABB_GPU AABB::buildFromTriangle(const TriangleGPU& triangle){
+AABB_GPU AABB::buildFromTriangle(const TriangleGPU& triangle, const MeshModelGPU& model){
     AABB_GPU aabb{};
 
-    aabb._Min.x = std::min(triangle._P0.x, std::min(triangle._P1.x, triangle._P2.x));
-    aabb._Min.y = std::min(triangle._P0.y, std::min(triangle._P1.y, triangle._P2.y));
-    aabb._Min.z = std::min(triangle._P0.z, std::min(triangle._P1.z, triangle._P2.z));
+    glm::vec4 p0 = model._ModelMatrix * triangle._P0;
+    glm::vec4 p1 = model._ModelMatrix * triangle._P1;
+    glm::vec4 p2 = model._ModelMatrix * triangle._P2;
 
-    aabb._Max.x = std::max(triangle._P0.x, std::max(triangle._P1.x, triangle._P2.x));
-    aabb._Max.y = std::max(triangle._P0.y, std::max(triangle._P1.y, triangle._P2.y));
-    aabb._Max.z = std::max(triangle._P0.z, std::max(triangle._P1.z, triangle._P2.z));
+    aabb._Min.x = std::min(p0.x, std::min(p1.x, p2.x));
+    aabb._Min.y = std::min(p0.y, std::min(p1.y, p2.y));
+    aabb._Min.z = std::min(p0.z, std::min(p1.z, p2.z));
+
+    aabb._Max.x = std::max(p0.x, std::max(p1.x, p2.x));
+    aabb._Max.y = std::max(p0.y, std::max(p1.y, p2.y));
+    aabb._Max.z = std::max(p0.z, std::max(p1.z, p2.z));
 
     return aabb;
 }
@@ -466,8 +474,9 @@ void BVH_Params::printClusters() const {
         } else {
             fprintf(
                 stdout,
-                "{leftChild: %u, triId: %u, aabb: (%s, %s)}",
+                "{leftChild: %u, rightChild: %u, triId: %u, aabb: (%s, %s)}",
                 _Clusters[i]->_LeftChild,
+                _Clusters[i]->_RightChild,
                 _Clusters[i]->_TriangleId,
                 glm::to_string(_Clusters[i]->_BoundingBox._Min).c_str(),
                 glm::to_string(_Clusters[i]->_BoundingBox._Max).c_str()

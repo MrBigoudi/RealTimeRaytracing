@@ -152,7 +152,20 @@ void Scene::bindSSBO(){
     // bvh->_InternalStruct.printClusters();
     GLuint bvhBinding = 5;
     auto bvhNodesGPU = getBVH_NodesToGPUData(bvh);
-    GLsizeiptr bvhNodesSize = sizeof(BVH_NodeGPU) * ((2*_NbTriangles)-1);
+    // fprintf(stdout, "to send to the GPU:\n");
+    // for(auto node : bvhNodesGPU){
+    //     fprintf(
+    //         stdout,
+    //         "{leftChild: %u, rightChild: %u, triId: %u, aabb: (%s, %s)}\n",
+    //         node._LeftChild,
+    //         node._RightChild,
+    //         node._TriangleId,
+    //         glm::to_string(node._BoundingBox._Min).c_str(),
+    //         glm::to_string(node._BoundingBox._Max).c_str()
+    //     );
+    // }
+    // exit(EXIT_SUCCESS);
+    GLsizeiptr bvhNodesSize = sizeof(BVH_NodeGPU) * bvhNodesGPU.size();
     glNamedBufferSubData(_BVH_SSBO, 
         0, 
         bvhNodesSize, 

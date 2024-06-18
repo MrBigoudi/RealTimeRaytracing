@@ -18,15 +18,16 @@ enum Axis {
 };
 
 struct AABB_GPU {
-    glm::vec4 _Min = INFINITY*glm::vec4(1.f,1.f,1.f,1.f);
-    glm::vec4 _Max = -INFINITY*glm::vec4(1.f,1.f,1.f,1.f);
+    glm::vec3 _Min = INFINITY*glm::vec3(1.f,1.f,1.f);
+    alignas(16) 
+    glm::vec3 _Max = -INFINITY*glm::vec3(1.f,1.f,1.f);
 };
 
 class AABB{
     public:
         static float getDiagonal(const AABB_GPU& aabb);
         static float getSurfaceArea(const AABB_GPU& aabb);
-        static AABB_GPU buildFromTriangle(const TriangleGPU& triangle);
+        static AABB_GPU buildFromTriangle(const TriangleGPU& triangle, const MeshModelGPU& model);
         static AABB_GPU merge(const AABB_GPU& aabb1, const AABB_GPU& aabb2);
 };
 

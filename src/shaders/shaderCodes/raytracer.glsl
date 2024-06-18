@@ -40,8 +40,8 @@ struct Hit {
 };
 
 struct AABB {
-    vec4 _Min;
-    vec4 _Max;
+    vec3 _Min;
+    vec3 _Max;
 };
 
 struct BVH_Node {
@@ -154,6 +154,92 @@ void getColor(Hit hit, inout vec4 color){
 }
 
 
+uint intersectBVH(Ray ray, BVH_Node node){
+    return 1;
+    float tMin = 0.f;
+    float tMax = -1.f;
+
+    // Check intersection with X-slabs
+    float inverseRayDirX = 1.0f / ray._Direction.x;
+    float tx1 = (node._BoundingBox._Min.x - ray._Origin.x) * inverseRayDirX;
+    float tx2 = (node._BoundingBox._Max.x - ray._Origin.x) * inverseRayDirX;
+
+    tMin = min(tx1, tx2);
+    tMax = max(tx1, tx2);
+
+    // Check for early exit
+    if(tMax < 0.f || tMin > tMax) {
+        return 0;
+    }
+
+    // Check intersection with Y-slabs
+    float inverseRayDirY = 1.0f / ray._Direction.y;
+    float ty1 = (node._BoundingBox._Min.y - ray._Origin.y) * inverseRayDirY;
+    float ty2 = (node._BoundingBox._Max.y - ray._Origin.y) * inverseRayDirY;
+
+    tMin = max(tMin, min(ty1, ty2));
+    tMax = min(tMax, max(ty1, ty2));
+
+    // Check for early exit
+    if(tMax < 0.f || tMin > tMax) {
+        return 0;
+    }
+
+    // Check intersection with Z-slabs
+    float inverseRayDirZ = 1.0f / ray._Direction.z;
+    float tz1 = (node._BoundingBox._Min.z - ray._Origin.z) * inverseRayDirZ;
+    float tz2 = (node._BoundingBox._Max.z - ray._Origin.z) * inverseRayDirZ;
+
+    tMin = max(tMin, min(tz1, tz2));
+    tMax = min(tMax, max(tz1, tz2));
+
+    // Check for intersection
+    if(tMax >= 0.f && tMin <= tMax){
+        return 1;
+    }
+    return 0;
+}
+
+uint isLeafBVH(BVH_Node node){
+    return 
+        node._LeftChild == 0
+        && node._RightChild == 0
+        ? 1 : 0;
+}
+
+Hit getClosestHitBVH(Ray ray, uint rootBvh){
+    Hit closestHit;
+    closestHit._DidHit = 0;
+
+    // Create a stack for the node indices
+    uint stack[8192];
+    int stackIndex = 0;
+    // Push the root node onto the stack
+    stack[stackIndex++] = rootBvh;
+    // Iterate while the stack is not empty
+    while (stackIndex > 0) {
+        // Pop the current node
+        uint currentNodeIndex = stack[--stackIndex];
+        BVH_Node curNode = uBVH_Nodes[currentNodeIndex];
+        // Check if the ray intersects the current BVH node's bounding box
+        if(intersectBVH(ray, curNode) == 1) {
+            // Check if the current node is a leaf
+            if(isLeafBVH(curNode) == 1) {
+                Hit hit = rayTriangleIntersection(ray, curNode._TriangleId);
+                if(closestHit._DidHit == 0 || hit._Coords.w < closestHit._Coords.w){
+                    closestHit = hit;
+                }
+            } else {
+                // Push the children onto the stack
+                stack[stackIndex++] = curNode._LeftChild;
+                stack[stackIndex++] = curNode._RightChild;
+            }
+        }
+    }
+
+    return closestHit;
+}
+
 
 // main
 void main() {
@@ -166,10 +252,21 @@ void main() {
 
     Ray ray = getRay(pixelPos);
 
-    Hit closestHit;
-    closestHit._DidHit = 0;
-    getAllHits(ray, uNbTriangles, closestHit);
+    // Hit closestHit;
+    // closestHit._DidHit = 0;
+    // getAllHits(ray, uNbTriangles, closestHit);
+    uint rootBvh = 0;
+    Hit closestHit = getClosestHitBVH(ray, rootBvh);
     getColor(closestHit, value);
+
+    // BVH_Node root = uBVH_Nodes[rootBvh];
+    // uint nbClusters = 2*uNbTriangles-1;
+    // value = vec4(
+    //     root._LeftChild / (1.f*nbClusters), 
+    //     root._RightChild / (1.f*nbClusters),
+    //     root._TriangleId / (1.f*uNbTriangles),
+    //     1.f
+    // );
 
     imageStore(oImage, texelCoord, value);
 }
