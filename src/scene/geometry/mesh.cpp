@@ -234,17 +234,17 @@ MeshPtr Mesh::load(const std::string& path){
                 vertices[v] = glm::vec3(vx, vy, vz);
             }
 
-            // check ccw order
-            // Calculate the normal of the triangle
-            glm::vec3 edge1 = vertices[1] - vertices[0];
-            glm::vec3 edge2 = vertices[2] - vertices[0];
-            glm::vec3 normal = glm::normalize(glm::cross(edge1, edge2));
-            // Check if the normal points in the correct direction
-            // Assuming positive z direction is the front face direction
-            if (normal.z < 0.0f) {
-                // If the normal points in the wrong direction, swap vertices[1] and vertices[2]
-                std::swap(vertices[1], vertices[2]);
-            }
+            // // check ccw order
+            // // Calculate the normal of the triangle
+            // glm::vec3 edge1 = vertices[1] - vertices[0];
+            // glm::vec3 edge2 = vertices[2] - vertices[0];
+            // glm::vec3 normal = glm::normalize(glm::cross(edge1, edge2));
+            // // Check if the normal points in the correct direction
+            // // Assuming positive z direction is the front face direction
+            // if (normal.z < 0.0f) {
+            //     // If the normal points in the wrong direction, swap vertices[1] and vertices[2]
+            //     std::swap(vertices[0], vertices[1]);
+            // }
 
             // Create a triangle and add it to the mesh
             loadedModel->_Triangles.emplace_back(

@@ -173,8 +173,8 @@ void Application::initScene() {
     _Scene->addMaterial({0.2, 0.3, 0.1, 1.});
 
     // load model
-    // MeshPtr model = Mesh::load(Mesh::MODELS_DIRECTORY + "teapot.obj");
-    MeshPtr model = Mesh::load(Mesh::MODELS_DIRECTORY + "suzanne.obj");
+    MeshPtr model = Mesh::load(Mesh::MODELS_DIRECTORY + "teapot.obj");
+    // MeshPtr model = Mesh::load(Mesh::MODELS_DIRECTORY + "suzanne.obj");
     model->setMaterial(1);
     _Scene->addMesh(model);
 
@@ -220,6 +220,9 @@ void Application::drawOneFrame() const {
     uint32_t nbGroupsZ = 1;
     float uniformTimeValue = _FPS._LastFrame;
     _ComputeProgram->setFloat("uTime", uniformTimeValue);
+    _ComputeProgram->setBool("uIsWireframeModeOn", true);
+    _ComputeProgram->setBool("uIsBVHDisplayed", true);
+    _ComputeProgram->setInt("uDepthDisplayBVH", 10);
     // send camera data
     assert(_Camera);
     CameraGPU cameraDataToSend = _Camera->getGpuData();

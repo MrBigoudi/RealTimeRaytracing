@@ -59,9 +59,17 @@ layout(local_size_x = 10, local_size_y = 10, local_size_z = 1) in;
 
 uniform float uTime;
 uniform Camera uCamera;
-uniform int uNbMaterials;
-uniform int uNbTriangles;
-uniform int uNbModels;
+uniform uint uNbMaterials;
+uniform uint uNbTriangles;
+uniform uint uNbModels;
+uniform int uDepthDisplayBVH;
+uniform bool uIsBVHDisplayed;
+uniform bool uIsWireframeModeOn; 
+
+const vec4 BVH_AABB_COLOR = vec4(0.5f, 0.f, 0.5f, 0.1f);
+const vec4 BVH_AABB_LINE_COLOR = vec4(0.7f, 0.f, 0.7f, 0.1f);
+const float WIREFRAME_LINE_WIDTH = 0.02f;
+const float BVH_LINE_WIDTH = 0.05f;
 
 layout (binding = 2, std430) readonly buffer uMaterialsSSBO {
     Material uMaterials[];
@@ -102,7 +110,7 @@ Hit rayTriangleIntersection(Ray ray, uint triangleIndex){
 
     vec3 triEdge0 = p1 - p0;
     vec3 triEdge1 = p2 - p0;
-    vec3 triNormale = normalize(cross(triEdge0, triEdge1));
+    vec3 triNormale = normalize(cross(triEdge1, triEdge0));
 
     vec3 q = cross(ray._Direction.xyz, triEdge1);
     float a = dot(triEdge0, q);
@@ -148,9 +156,26 @@ void getAllHits(Ray ray, uint nbTriangles, inout Hit closestHit){
     }
 }
 
-void getColor(Hit hit, inout vec4 color){
+void getColor(Hit hit, vec4 bvhColor, inout vec4 color){
+    // bvh color
+    if(uIsBVHDisplayed){
+        color = bvhColor;
+    }
+
     if(hit._DidHit == 0) return;
-    color = uMaterials[uModels[uTriangles[hit._TriangleId]._ModelId]._MaterialId]._Color;
+    Triangle hitTriangle = uTriangles[hit._TriangleId];
+    color += uMaterials[uModels[hitTriangle._ModelId]._MaterialId]._Color;
+
+    // wireframe color
+    if(uIsWireframeModeOn){
+        // check distance to edges
+        float threshold = WIREFRAME_LINE_WIDTH;
+        if(hit._Coords.x < threshold
+            || hit._Coords.y < threshold
+            || hit._Coords.z < threshold){
+            color = vec4(0.f, 0.f, 0.f, 1.f);
+        }
+    }
 }
 
 
@@ -194,6 +219,18 @@ uint intersectBVH(Ray ray, BVH_Node node){
 
     // Check for intersection
     if(tMax >= 0.f && tMin <= tMax){
+        // check if border
+        float threshold = BVH_LINE_WIDTH / (uDepthDisplayBVH + 1.f);
+        vec3 enterPoint = ray._Origin.xyz + ray._Direction.xyz * tMin;
+        bool closeToX = (abs(enterPoint.x - node._BoundingBox._Min.x) < threshold) 
+            || (abs(enterPoint.x - node._BoundingBox._Max.x) < threshold);
+        bool closeToY = (abs(enterPoint.y - node._BoundingBox._Min.y) < threshold) 
+            || (abs(enterPoint.y - node._BoundingBox._Max.y) < threshold);
+        bool closeToZ = (abs(enterPoint.z - node._BoundingBox._Min.z) < threshold) 
+            || (abs(enterPoint.z - node._BoundingBox._Max.z) < threshold);
+        if((closeToX && closeToY) || (closeToX && closeToZ) || (closeToY && closeToZ)){
+            return 2;
+        }
         return 1;
     }
     return 0;
@@ -206,22 +243,36 @@ uint isLeafBVH(BVH_Node node){
         ? 1 : 0;
 }
 
-Hit getClosestHitBVH(Ray ray, uint rootBvh){
+Hit getClosestHitBVH(Ray ray, uint rootBvh, inout vec4 bvhColor){
     Hit closestHit;
     closestHit._DidHit = 0;
 
     // Create a stack for the node indices
-    uint stack[1024];
+    const uint STACK_SIZE = 1024;
+    uint stack[STACK_SIZE];
+    uint depthStack[STACK_SIZE];
     int stackIndex = 0;
     // Push the root node onto the stack
-    stack[stackIndex++] = rootBvh;
+    stack[stackIndex] = rootBvh;
+    depthStack[stackIndex] = 0;
+    stackIndex++;
     // Iterate while the stack is not empty
     while (stackIndex > 0) {
         // Pop the current node
-        uint currentNodeIndex = stack[--stackIndex];
+        stackIndex--;
+        uint currentNodeIndex = stack[stackIndex];
+        uint currentDepth = depthStack[stackIndex];
         BVH_Node curNode = uBVH_Nodes[currentNodeIndex];
         // Check if the ray intersects the current BVH node's bounding box
-        if(intersectBVH(ray, curNode) == 1) {
+        uint intersectionBVH = intersectBVH(ray, curNode);
+        if(intersectionBVH != 0) {
+            if(currentDepth == uDepthDisplayBVH){
+                if(intersectionBVH == 2){
+                    bvhColor = BVH_AABB_LINE_COLOR;
+                } else {
+                    bvhColor = BVH_AABB_COLOR;
+                }
+            }
             // Check if the current node is a leaf
             if(isLeafBVH(curNode) == 1) {
                 Hit hit = rayTriangleIntersection(ray, curNode._TriangleId);
@@ -230,8 +281,12 @@ Hit getClosestHitBVH(Ray ray, uint rootBvh){
                 }
             } else {
                 // Push the children onto the stack
-                stack[stackIndex++] = curNode._LeftChild;
-                stack[stackIndex++] = curNode._RightChild;
+                stack[stackIndex] = curNode._LeftChild;
+                depthStack[stackIndex] = currentDepth+1;
+                stackIndex++;
+                stack[stackIndex] = curNode._RightChild;
+                depthStack[stackIndex] = currentDepth+1;
+                stackIndex++;
             }
         }
     }
@@ -258,9 +313,10 @@ void main() {
 
     // bvh
     uint rootBvh = 0;
-    Hit closestHit = getClosestHitBVH(ray, rootBvh);
+    vec4 bvhColor = vec4(0.f, 0.f, 0.f, 0.f);
+    Hit closestHit = getClosestHitBVH(ray, rootBvh, bvhColor);
 
-    getColor(closestHit, value);
+    getColor(closestHit, bvhColor, value);
 
     // BVH_Node root = uBVH_Nodes[rootBvh];
     // uint nbClusters = 2*uNbTriangles-1;
