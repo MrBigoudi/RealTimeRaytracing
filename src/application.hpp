@@ -21,6 +21,10 @@ struct ApplicationFPS {
         float _MinTime = INFINITY;
         float _MaxTime = 0.f;
 
+        float _AvgFPS = 0.f;
+        float _MinFPS = 0.f;
+        float _MaxFPS = 0.f;
+
     public:
         void increment();
         void display();
@@ -41,10 +45,17 @@ struct ApplicationParameters {
     glm::vec4 _BackgroundColor = glm::vec4(0.2f, 0.3f, 0.3f, 1.f);
 };
 
+struct ApplicationOptions {
+    bool _IsWireframeModeOn = false;
+    bool _IsBVHDisplayed = false;
+    int _DepthDisplayBVH = 0;
+};
+
 class Application {
     private:
         ApplicationParameters _Parameters = {};
         ApplicationFPS _FPS = {};
+        ApplicationOptions _Options = {};
 
         GLFWwindow* _Window = nullptr;
         ProgramPtr _RenderingProgram = nullptr;
@@ -69,6 +80,8 @@ class Application {
         void initCallbacks();
         void initScene();
 
+        void initImgui();
+
         void init();
         void quit() const;
 
@@ -81,6 +94,7 @@ class Application {
         void initTexture();
 
         void render();
+        void drawImgui();
 
     public:
         Application(ApplicationParameters parameters = {});

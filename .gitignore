@@ -5,3 +5,4 @@ build
 vg*
 out.txt
 log.txt
+imgui.ini

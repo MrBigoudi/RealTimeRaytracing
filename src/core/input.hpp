@@ -11,7 +11,8 @@ enum MouseMode{
 };
 
 struct MouseParamters {
-    MouseMode _Mode;
+    MouseMode _Mode = MOUSE_MODE_CAMERA;
+    bool _MouseModeButtonIsBeingPressed = false;
     bool _NeedsToBeInit = true;
     double _LastX = 0.;
     double _LastY = 0.;

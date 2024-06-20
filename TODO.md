@@ -1,7 +1,6 @@
 # Todo list
 
 
-- add imgui to display FPS
 - add debug time graphs
 
 compute the time for each segment in the algorithm

@@ -1,7 +1,11 @@
 #include "application.hpp"
 #include "errorHandler.hpp"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 #include "input.hpp"
 #include "shader.hpp"
+
+#include "imgui.h"
 
 Application::Application(ApplicationParameters parameters){
     _Parameters = parameters;
@@ -215,14 +219,15 @@ void Application::drawOneFrame() const {
     // use the compute shader
     assert(_ComputeProgram->isInit());
     _ComputeProgram->use();
+    // _Scene->sendDataToGpu(_ComputeProgram);
     uint32_t nbGroupsX = _Parameters._ViewportWidth / 10.f;
     uint32_t nbGroupsY = _Parameters._ViewportHeight / 10.f;
     uint32_t nbGroupsZ = 1;
     float uniformTimeValue = _FPS._LastFrame;
     _ComputeProgram->setFloat("uTime", uniformTimeValue);
-    _ComputeProgram->setBool("uIsWireframeModeOn", true);
-    _ComputeProgram->setBool("uIsBVHDisplayed", true);
-    _ComputeProgram->setInt("uDepthDisplayBVH", 10);
+    _ComputeProgram->setBool("uIsWireframeModeOn", _Options._IsWireframeModeOn);
+    _ComputeProgram->setBool("uIsBVHDisplayed", _Options._IsBVHDisplayed);
+    _ComputeProgram->setInt("uDepthDisplayBVH", _Options._DepthDisplayBVH);
     // send camera data
     assert(_Camera);
     CameraGPU cameraDataToSend = _Camera->getGpuData();
@@ -257,9 +262,10 @@ void Application::drawOneFrame() const {
 void Application::render() {
     clearScreen();
     drawOneFrame();
-    glfwSwapBuffers(_Window);
     _FPS.increment();
-    _FPS.display();
+    // _FPS.display();
+    drawImgui();
+    glfwSwapBuffers(_Window);
 }
 
 void Application::initShaders(){
@@ -281,6 +287,7 @@ void Application::init(){
     initCamera();
     initCallbacks();
     initScene();
+    initImgui();
     // static scene
     _Scene->sendDataToGpu(_ComputeProgram);
 }
@@ -348,20 +355,55 @@ void ApplicationFPS::increment(){
 
 void ApplicationFPS::display(){
     if(_FrameCounter >= _NbFramesBetweenDisplay){
-        float avgFPS = 1.f / (_SumOfTimes / static_cast<float>(_FrameCounter));
-        float minFPS = 1.f / _MaxTime;
-        float maxFPS = 1.f / _MinTime;
+        _AvgFPS = 1.f / (_SumOfTimes / static_cast<float>(_FrameCounter));
+        _MinFPS = 1.f / _MaxTime;
+        _MaxFPS = 1.f / _MinTime;
 
         _FrameCounter = 0;
         _SumOfTimes = 0.f;
         _MinTime = INFINITY;
-        _MaxTime = 0.f;
-        
-        if(_DisplayFPS){
-            fprintf(stdout,
-                "avg FPS: %.2f\nmin FPS: %.2f\nmax FPS: %.2f\n\n", 
-                avgFPS, minFPS, maxFPS
-            );
-        }
+        _MaxTime = 0.f; 
     }
+    
+    ImGui::Begin("Statistics");
+    ImGui::Text("avg FPS: %.2f\nmin FPS: %.2f\nmax FPS: %.2f\n\n", 
+                    _AvgFPS, _MinFPS, _MaxFPS);
+    ImGui::End();
+}
+
+void Application::initImgui(){
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
+    //ImGui::StyleColorsLight();
+
+    // Setup Platform/Renderer backends
+    ImGui_ImplGlfw_InitForOpenGL(_Window, true);
+    ImGui_ImplOpenGL3_Init("#version 130");
+}
+
+void Application::drawImgui() {
+    // Start the ImGui frame
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+
+    // Render ImGui elements
+    ImGui::Begin("Parameters");
+    ImGui::Checkbox("Display triangle", &_Options._IsWireframeModeOn);
+    ImGui::Checkbox("Display BVH", &_Options._IsBVHDisplayed);
+    ImGui::SliderInt("BVH depth to display", &_Options._DepthDisplayBVH, 0, 10);
+    ImGui::End();
+
+    _FPS.display();
+
+    // Rendering
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
