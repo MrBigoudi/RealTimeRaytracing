@@ -220,8 +220,8 @@ void Application::drawOneFrame() const {
     assert(_ComputeProgram->isInit());
     _ComputeProgram->use();
     // _Scene->sendDataToGpu(_ComputeProgram);
-    uint32_t nbGroupsX = _Parameters._ViewportWidth / 10.f;
-    uint32_t nbGroupsY = _Parameters._ViewportHeight / 10.f;
+    uint32_t nbGroupsX = _Parameters._ViewportWidth / 16.f;
+    uint32_t nbGroupsY = _Parameters._ViewportHeight / 16.f;
     uint32_t nbGroupsZ = 1;
     float uniformTimeValue = _FPS._LastFrame;
     _ComputeProgram->setFloat("uTime", uniformTimeValue);

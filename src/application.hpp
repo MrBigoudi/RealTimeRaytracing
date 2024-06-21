@@ -12,7 +12,7 @@
 struct ApplicationFPS {
     public:
         bool _DisplayFPS = true;
-        uint32_t _NbFramesBetweenDisplay = 100;
+        uint32_t _NbFramesBetweenDisplay = 10;
         float _LastFrame = 0.f;
 
     private:
