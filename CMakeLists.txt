@@ -3,6 +3,9 @@ cmake_policy(SET CMP0072 NEW)
 
 project(nvidiaRaytracing)
 
+# Enable testing
+enable_testing()
+
 # Set the path to the project directory
 set(PROJECT_SOURCE_DIR ${CMAKE_SOURCE_DIR})
 
@@ -56,3 +59,4 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 # Add subdirectories
 add_subdirectory(src)
 add_subdirectory(dep)
+add_subdirectory(tests)
