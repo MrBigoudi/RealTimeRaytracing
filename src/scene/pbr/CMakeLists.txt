@@ -6,14 +6,14 @@ set(SCENE_PBR_HEADER_FILES
     material.hpp
 )
 
-target_sources(ntm 
+target_sources(common 
     PUBLIC 
         ${SCENE_PBR_HEADER_FILES}
     PRIVATE
         ${SCENE_PBR_SOURCE_FILES}
 )
 
-target_include_directories(ntm 
+target_include_directories(common 
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
         $<INSTALL_INTERFACE:include>

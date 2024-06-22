@@ -8,14 +8,14 @@ set(SHADERS_HEADER_FILES
     shader.hpp
 )
 
-target_sources(ntm 
+target_sources(common 
     PUBLIC 
         ${SHADERS_HEADER_FILES}
     PRIVATE 
         ${SHADERS_SOURCE_FILES}
 )
 
-target_include_directories(ntm 
+target_include_directories(common 
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
         $<INSTALL_INTERFACE:include>

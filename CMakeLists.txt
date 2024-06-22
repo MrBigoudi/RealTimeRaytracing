@@ -54,7 +54,7 @@ add_executable(${PROJECT_NAME} main.cpp)
 
 # Link dependencies
 target_link_libraries(${PROJECT_NAME} PRIVATE 
-    ntm
+    common
     glfw 
     OpenGL
     OpenMP::OpenMP_CXX

@@ -1,5 +1,5 @@
 # Add common library
-add_library(ntm)
+add_library(common)
 
 set(SOURCE_FILES 
     application.cpp
@@ -9,14 +9,14 @@ set(HEADER_FILES
     application.hpp
 )
 
-target_sources(ntm 
+target_sources(common 
     PUBLIC 
         ${HEADER_FILES}
     PRIVATE 
         ${SOURCE_FILES}
 )
 
-target_include_directories(ntm 
+target_include_directories(common 
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
         $<INSTALL_INTERFACE:include>

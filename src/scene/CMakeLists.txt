@@ -8,14 +8,14 @@ set(SCENE_HEADER_FILES
     scene.hpp
 )
 
-target_sources(ntm 
+target_sources(common 
     PUBLIC 
         ${SCENE_HEADER_FILES}
     PRIVATE 
         ${SCENE_SOURCE_FILES}
 )
 
-target_include_directories(ntm 
+target_include_directories(common 
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
         $<INSTALL_INTERFACE:include>
