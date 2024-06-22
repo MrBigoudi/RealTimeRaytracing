@@ -1,8 +1,19 @@
-file(GLOB SCENE_PBR_SOURCE_FILES "*.cpp")
+set(SCENE_PBR_SOURCE_FILES
+    material.cpp
+)
 
-target_sources(${PROJECT_NAME} PUBLIC ${SCENE_PBR_SOURCE_FILES})
+set(SCENE_PBR_HEADER_FILES
+    material.hpp
+)
 
-target_include_directories(${PROJECT_NAME} 
+target_sources(ntm 
+    PUBLIC 
+        ${SCENE_PBR_HEADER_FILES}
+    PRIVATE
+        ${SCENE_PBR_SOURCE_FILES}
+)
+
+target_include_directories(ntm 
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
         $<INSTALL_INTERFACE:include>

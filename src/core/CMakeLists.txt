@@ -1,8 +1,21 @@
-file(GLOB CORE_SOURCE_FILES "*.cpp")
+set(CORE_SOURCE_FILES
+    errorHandler.cpp
+    input.cpp
+)
 
-target_sources(${PROJECT_NAME} PUBLIC ${CORE_SOURCE_FILES})
+set(CORE_HEADER_FILES
+    errorHandler.hpp
+    input.hpp
+)
 
-target_include_directories(${PROJECT_NAME} 
+target_sources(ntm 
+    PUBLIC 
+        ${CORE_HEADER_FILES}
+    PRIVATE
+        ${CORE_SOURCE_FILES}
+)
+
+target_include_directories(ntm 
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
         $<INSTALL_INTERFACE:include>

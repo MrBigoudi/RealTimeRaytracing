@@ -13,6 +13,8 @@ layout (binding = 2, std430) readonly buffer uValuesToSort {
     uint uValuesToSort[];
 };
 
+uniform uint uNbValuesToSort;
+
 
 // outputs
 layout (binding = 3, std430) buffer uGlobalHistogram {
@@ -29,9 +31,10 @@ void main(){
 
     // feed shared histogram
     for(uint i=instanceIndex; i<(instanceIndex+NB_ITEMS_PER_THREAD); i++){
-        for(uint j=0; j<NB_DIGIT; j++){
-            for(uint k=0; k<NB_DIGIT_PLACE; k++){
-                uint bitPosition = (j*NB_DIGIT_PLACE)+k;
+        if(i >= uNbValuesToSort){break;}
+        for(uint k=0; k<NB_DIGIT_PLACE; k++){
+            for(uint j=0; j<NB_DIGIT; j++){
+                uint bitPosition = (k*NB_DIGIT)+j;
                 if (uValuesToSort[i] & (1 << bitPosition)) {
                     atomicAdd(sHistogramTile[bitPosition], 1);
                 }
@@ -41,6 +44,7 @@ void main(){
 
     // add shared histogram to global histogram
     barrier();
+    memoryBarrierShared();
     // only one thread per work group performs the copy
     if (gl_LocalInvocationIndex == 0) { 
         for(uint i = 0; i < NB_DIGIT * NB_DIGIT_PLACE; i++) {

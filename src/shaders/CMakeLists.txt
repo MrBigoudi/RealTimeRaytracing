@@ -1,8 +1,21 @@
-file(GLOB SHADERS_SOURCE_FILES "*.cpp")
+set(SHADERS_SOURCE_FILES
+    program.cpp
+    shader.cpp
+)
 
-target_sources(${PROJECT_NAME} PUBLIC ${SHADERS_SOURCE_FILES})
+set(SHADERS_HEADER_FILES
+    program.hpp
+    shader.hpp
+)
 
-target_include_directories(${PROJECT_NAME} 
+target_sources(ntm 
+    PUBLIC 
+        ${SHADERS_HEADER_FILES}
+    PRIVATE 
+        ${SHADERS_SOURCE_FILES}
+)
+
+target_include_directories(ntm 
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
         $<INSTALL_INTERFACE:include>

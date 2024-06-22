@@ -1,14 +1,29 @@
-file(GLOB SOURCE_FILES "*.cpp")
+# Add common library
+add_library(ntm)
 
-target_sources(${PROJECT_NAME} PUBLIC ${SOURCE_FILES})
+set(SOURCE_FILES 
+    application.cpp
+)
 
-target_include_directories(${PROJECT_NAME} 
+set(HEADER_FILES 
+    application.hpp
+)
+
+target_sources(ntm 
+    PUBLIC 
+        ${HEADER_FILES}
+    PRIVATE 
+        ${SOURCE_FILES}
+)
+
+target_include_directories(ntm 
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
         $<INSTALL_INTERFACE:include>
     PRIVATE
 )
 
+add_subdirectory(dep)
 add_subdirectory(core)
 add_subdirectory(scene)
 add_subdirectory(shaders)

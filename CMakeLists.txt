@@ -1,4 +1,5 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.5)
+cmake_policy(SET CMP0076 NEW)
 cmake_policy(SET CMP0072 NEW)
 
 project(nvidiaRaytracing)
@@ -44,19 +45,19 @@ find_package(OpenGL REQUIRED)
 find_package(OpenMP REQUIRED)
 find_package(tinyobjloader REQUIRED)
 
+# Add subdirectories
+add_subdirectory(src)
+add_subdirectory(tests)
+
 # Add executable
 add_executable(${PROJECT_NAME} main.cpp)
 
 # Link dependencies
 target_link_libraries(${PROJECT_NAME} PRIVATE 
+    ntm
     glfw 
     OpenGL
     OpenMP::OpenMP_CXX
     cflags 
     tinyobjloader
 )
-
-# Add subdirectories
-add_subdirectory(src)
-add_subdirectory(dep)
-add_subdirectory(tests)
