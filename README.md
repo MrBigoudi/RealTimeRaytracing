@@ -9,10 +9,13 @@ To run this project, first clone the github project:
 git clone git@github.com:MrBigoudi/RealTimeRaytracing.git
 ```
 
-Then build the project
+Then launch the project
 ```sh
 cd RealTimeRaytracing
-cmake -B build
-make -C build
-./bulid/nvidiaRaytracing
+./run_app.sh
+```
+
+You can also run tests with
+```sh
+./run_tests.sh
 ```
