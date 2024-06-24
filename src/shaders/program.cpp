@@ -114,7 +114,7 @@ void Program::setInt(const std::string & name, int value) const {
 
 void Program::setUInt(const std::string & name, unsigned int value) const { 
     use(); 
-    glUniform1i(getLocation(name.c_str()), int(value)); 
+    glUniform1ui(getLocation(name.c_str()), int(value)); 
 }
 
 void Program::setVec2(const std::string & name, const glm::vec2 & value) const { 

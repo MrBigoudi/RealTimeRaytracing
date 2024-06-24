@@ -88,7 +88,6 @@ class Application {
         void mainLoop();
         void processInput() const;
 
-        void clearScreen() const;
         void drawOneFrame() const;
         void initRectangleVAO();
         void initTexture();
@@ -98,9 +97,13 @@ class Application {
 
     public:
         Application(ApplicationParameters parameters = {});
+        ~Application();
+        static Application dummyApplication();
         CameraPtr getCamera() const;
 
     public:
         void run();
+        void clearScreen() const;
+        void swapBuffers() const;
 
 };

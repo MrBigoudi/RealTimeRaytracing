@@ -265,7 +265,7 @@ void Application::render() {
     _FPS.increment();
     // _FPS.display();
     drawImgui();
-    glfwSwapBuffers(_Window);
+    swapBuffers();
 }
 
 void Application::initShaders(){
@@ -295,7 +295,6 @@ void Application::init(){
 void Application::run(){
     init();
     mainLoop();
-    quit();
 }
 
 void Application::quit() const{
@@ -406,4 +405,21 @@ void Application::drawImgui() {
     // Rendering
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
+Application::~Application(){
+    quit();
+}
+
+Application Application::dummyApplication(){
+    Application newApp;
+    newApp.initGLFW();
+    newApp.initWindow();
+    newApp.initGLAD();
+    newApp.initViewport();
+    return newApp;
+}
+
+void Application::swapBuffers() const {
+    glfwSwapBuffers(_Window);
 }

@@ -1,15 +1,17 @@
 #version 460 core
 
 // constants
-const uint NB_BITS = 30; // k = 30
-const uint NB_DIGIT = 8; // d = 8
-const uint NB_DIGIT_PLACE = 4; // p = sup(k/d)
+const uint NB_BITS = 32; // k = 32
+const uint NB_DIGIT = 4; // d = 4
+const uint NB_DIGIT_PLACE = 8; // p = sup(k/d)
 const uint NB_ITEMS_PER_THREAD = 8;
 
 // inputs
-layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+const uint LOCAL_SIZE_X = 16;
+const uint LOCAL_SIZE_Y = 16;
+layout(local_size_x = LOCAL_SIZE_X, local_size_y = LOCAL_SIZE_Y) in;
 
-layout (binding = 2, std430) readonly buffer uValuesToSort {
+layout (binding = 2, std430) readonly buffer uValuesToSortSSBO {
     uint uValuesToSort[];
 };
 
@@ -17,7 +19,7 @@ uniform uint uNbValuesToSort;
 
 
 // outputs
-layout (binding = 3, std430) buffer uGlobalHistogram {
+layout (binding = 3, std430) buffer uGlobalHistogramSSBO {
     uint uGlobalHistogram[];
 };
 
@@ -27,7 +29,8 @@ shared uint sHistogramTile[NB_DIGIT*NB_DIGIT_PLACE];
 
 // functions
 void main(){
-    uint instanceIndex = gl_GlobalInvocationID.x*NB_ITEMS_PER_THREAD;
+    uint instanceIndex = gl_GlobalInvocationID.x * NB_ITEMS_PER_THREAD 
+        + gl_GlobalInvocationID.y * (gl_NumWorkGroups.x * gl_WorkGroupSize.x * NB_ITEMS_PER_THREAD);
 
     // feed shared histogram
     for(uint i=instanceIndex; i<(instanceIndex+NB_ITEMS_PER_THREAD); i++){
@@ -35,7 +38,9 @@ void main(){
         for(uint k=0; k<NB_DIGIT_PLACE; k++){
             for(uint j=0; j<NB_DIGIT; j++){
                 uint bitPosition = (k*NB_DIGIT)+j;
-                if (uValuesToSort[i] & (1 << bitPosition)) {
+                uint mask = uint(1) << bitPosition;
+                uint currentValue = uValuesToSort[i];
+                if((currentValue & mask) != (uint(0))) {
                     atomicAdd(sHistogramTile[bitPosition], 1);
                 }
             }
@@ -49,6 +54,7 @@ void main(){
     if (gl_LocalInvocationIndex == 0) { 
         for(uint i = 0; i < NB_DIGIT * NB_DIGIT_PLACE; i++) {
             atomicAdd(uGlobalHistogram[i], sHistogramTile[i]);
+            // atomicAdd(uGlobalHistogram[i], 1);
         }
     }
 }
