@@ -1,9 +1,9 @@
 #version 460 core
 
 // constants
-const uint NB_BITS = 30; // k = 30
-const uint NB_DIGIT = 8; // d = 8
-const uint NB_DIGIT_PLACE = 4; // p = sup(k/d)
+const uint NB_BITS = 32; // k = 32
+const uint NB_DIGIT = 4; // d = 4
+const uint NB_DIGIT_PLACE = 8; // p = sup(k/d)
 const uint NB_ITEMS_PER_THREAD = 8;
 
 // inputs

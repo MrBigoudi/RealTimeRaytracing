@@ -6,7 +6,7 @@
 
 
 ///// constants
-const uint INPUT_BUFFER_SIZE = 130;
+const uint INPUT_BUFFER_SIZE = 2 << 15;
 const uint NB_DIGIT = 4; // d = 4
 const uint NB_DIGIT_PLACE = 8; // p = sup(k/d)
 const uint OUTPUT_BUFFER_SIZE = NB_DIGIT_PLACE*NB_DIGIT;
@@ -37,38 +37,6 @@ void initRandomValuesExpectedResults(uint32_t* inputArray, uint32_t* outputArray
             }
         }
     }
-}
-
-void initPowersOfTwoValuesToSort(uint32_t* inputArray, uint32_t nbValues){
-    for(size_t i=0; i<nbValues; i++){
-        inputArray[i] = (1 << (i % 32));
-    }
-}
-
-void initPowersOfTwoExpectedResults(uint32_t* outputArray, uint32_t nbValues){
-    for(size_t i=0; i<INPUT_BUFFER_SIZE; i++){
-        outputArray[i%nbValues]++;
-    }
-}
-
-void initOnesToSort(uint32_t* inputArray, uint32_t nbValues){
-    for(size_t i=0; i<nbValues; i++){
-        inputArray[i] = 1;
-    }
-}
-
-void initTwosToSort(uint32_t* inputArray, uint32_t nbValues){
-    for(size_t i=0; i<nbValues; i++){
-        inputArray[i] = 2;
-    }
-}
-
-void initOnesExpectedResults(uint32_t* outputArray){
-    outputArray[0] = INPUT_BUFFER_SIZE;
-}
-
-void initTwosExpectedResults(uint32_t* outputArray){
-    outputArray[1] = INPUT_BUFFER_SIZE;
 }
 
 GLuint initBuffer(size_t bufferSize, uint32_t* buffer){
@@ -150,45 +118,7 @@ void runTest(ProgramPtr program, uint32_t* valuesToSort, uint32_t* expectedResul
 }
 
 
-///// tests
-void testPowersOfTwo(ProgramPtr program){
-    fprintf(stderr, "\nBegin test: powers of two...\n");
-    uint valuesToSort[INPUT_BUFFER_SIZE] = {0};
-    initPowersOfTwoValuesToSort(valuesToSort, INPUT_BUFFER_SIZE);
-    uint32_t expectedResults[OUTPUT_BUFFER_SIZE] = {0};
-    initPowersOfTwoExpectedResults(expectedResults, OUTPUT_BUFFER_SIZE);
-    runTest(program, valuesToSort, expectedResults);
-    fprintf(stderr, "\tOk\n");
-}
-
-void testZeros(ProgramPtr program){
-    fprintf(stderr, "\nBegin test: zeros...\n");
-    uint valuesToSort[INPUT_BUFFER_SIZE] = {0};
-    uint32_t expectedResults[OUTPUT_BUFFER_SIZE] = {0};
-    runTest(program, valuesToSort, expectedResults);
-    fprintf(stderr, "\tOk\n");
-}
-
-void testOnes(ProgramPtr program){
-    fprintf(stderr, "\nBegin test: ones...\n");
-    uint valuesToSort[INPUT_BUFFER_SIZE] = {0};
-    initOnesToSort(valuesToSort, INPUT_BUFFER_SIZE);
-    uint32_t expectedResults[OUTPUT_BUFFER_SIZE] = {0};
-    initOnesExpectedResults(expectedResults);
-    runTest(program, valuesToSort, expectedResults);
-    fprintf(stderr, "\tOk\n");
-}
-
-void testTwos(ProgramPtr program){
-    fprintf(stderr, "\nBegin test: twos...\n");
-    uint valuesToSort[INPUT_BUFFER_SIZE] = {0};
-    initTwosToSort(valuesToSort, INPUT_BUFFER_SIZE);
-    uint32_t expectedResults[OUTPUT_BUFFER_SIZE] = {0};
-    initTwosExpectedResults(expectedResults);
-    runTest(program, valuesToSort, expectedResults);
-    fprintf(stderr, "\tOk\n");
-}
-
+///// test
 void testRandomValues(ProgramPtr program){
     fprintf(stderr, "\nBegin test: random...\n");
     uint valuesToSort[INPUT_BUFFER_SIZE] = {0};
@@ -205,12 +135,6 @@ void testRandomValues(ProgramPtr program){
 int main() {   
     Application app = Application::dummyApplication();
     ProgramPtr program = loadComputeShader();
-
-    testPowersOfTwo(program);
-    testZeros(program);
-    testOnes(program);
-    testTwos(program);
     testRandomValues(program);
-
     exit(EXIT_SUCCESS);
 }

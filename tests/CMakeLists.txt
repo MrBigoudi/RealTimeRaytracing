@@ -16,3 +16,4 @@ endfunction()
 
 # Add the tests
 add_project_test(histogramCreation testSortGPU/testHistogramCreation.cpp)
+add_project_test(histogramCreationHard testSortGPU/testHistogramCreationHard.cpp)
