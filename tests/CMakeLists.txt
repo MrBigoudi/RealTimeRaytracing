@@ -15,5 +15,8 @@ function(add_project_test TEST_NAME TEST_SOURCE)
 endfunction()
 
 # Add the tests
+
+# Tests GPU sorting
 add_project_test(histogramCreation testSortGPU/testHistogramCreation.cpp)
 add_project_test(histogramCreationHard testSortGPU/testHistogramCreationHard.cpp)
+add_project_test(histogramPrefixSum testSortGPU/testHistogramPrefixSum.cpp)

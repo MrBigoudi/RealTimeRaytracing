@@ -6,10 +6,10 @@
 
 
 ///// constants
-const uint INPUT_BUFFER_SIZE = 2 << 15;
-const uint NB_DIGIT = 4; // d = 4
-const uint NB_DIGIT_PLACE = 8; // p = sup(k/d)
-const uint OUTPUT_BUFFER_SIZE = NB_DIGIT_PLACE*NB_DIGIT;
+const uint32_t INPUT_BUFFER_SIZE = 2 << 15;
+const uint32_t NB_DIGIT = 4; // d = 4
+const uint32_t NB_DIGIT_PLACE = 8; // p = sup(k/d)
+const uint32_t OUTPUT_BUFFER_SIZE = NB_DIGIT_PLACE*NB_DIGIT;
 
 
 ///// helpers
@@ -66,7 +66,7 @@ ProgramPtr loadComputeShader(){
 
 void displayBuffer(const std::string& name, uint32_t* buffer, size_t bufferSize){
     fprintf(stderr, "%s:\n[", name.c_str());
-        for (uint i = 0; i < bufferSize-1; i++) {
+        for (uint32_t i = 0; i < bufferSize-1; i++) {
             fprintf(stderr, "%u, ", buffer[i]);
         }
         fprintf(stderr, "%u]\n", buffer[bufferSize-1]);
@@ -97,19 +97,10 @@ void runTest(ProgramPtr program, uint32_t* valuesToSort, uint32_t* expectedResul
     // retrieve the data from the output buffer
     glGetNamedBufferSubData(globalHistogramSSBO, 0, outputBufferSize, globalHistogram);
     
-    // dispay expected
-    fprintf(stderr, "expected:\n\t[");
-    for(size_t i=0; i<OUTPUT_BUFFER_SIZE-1; i++){
-        fprintf(stderr, "%u, ", expectedResults[i]);
-    }
-    fprintf(stderr, "%u]\n", expectedResults[OUTPUT_BUFFER_SIZE-1]);
-
-    // dispay results
-    fprintf(stderr, "results:\n\t[");
-    for(size_t i=0; i<OUTPUT_BUFFER_SIZE-1; i++){
-        fprintf(stderr, "%u, ", globalHistogram[i]);
-    }
-    fprintf(stderr, "%u]\n", globalHistogram[OUTPUT_BUFFER_SIZE-1]);
+    // display expected
+    displayBuffer("expected", expectedResults, OUTPUT_BUFFER_SIZE);
+    // display results
+    displayBuffer("results", globalHistogram, OUTPUT_BUFFER_SIZE);
 
     // check values
     for(size_t i=0; i<OUTPUT_BUFFER_SIZE; i++){
@@ -121,7 +112,7 @@ void runTest(ProgramPtr program, uint32_t* valuesToSort, uint32_t* expectedResul
 ///// test
 void testRandomValues(ProgramPtr program){
     fprintf(stderr, "\nBegin test: random...\n");
-    uint valuesToSort[INPUT_BUFFER_SIZE] = {0};
+    uint32_t valuesToSort[INPUT_BUFFER_SIZE] = {0};
     initRandomValuesToSort(valuesToSort, INPUT_BUFFER_SIZE);
     uint32_t expectedResults[OUTPUT_BUFFER_SIZE] = {0};
     initRandomValuesExpectedResults(valuesToSort, expectedResults);
