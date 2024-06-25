@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <glm/glm.hpp>
 
+namespace glr{
+
 #define MAX_NB_TRIANGLES 2<<15
 // #define MAX_NB_TRIANGLES 2<<3
 
@@ -29,3 +31,5 @@ class Triangle{
         static glm::vec3 getCentroid(const TriangleGPU& triangle, const glm::mat4& model);
 
 };
+
+}

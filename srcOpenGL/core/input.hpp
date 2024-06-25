@@ -4,6 +4,7 @@
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 
+namespace glr{
 
 enum MouseMode{
     MOUSE_MODE_CAMERA,
@@ -27,3 +28,5 @@ class Input{
         static void cameraInput(GLFWwindow* window, CameraPtr camera, float dt);
 
 };
+
+}

@@ -10,6 +10,8 @@
 #include "triangle.hpp"
 #include "mesh.hpp"
 
+namespace glr{
+
 class BVH;
 using BVH_Ptr = std::shared_ptr<BVH>;
 
@@ -120,3 +122,5 @@ class BVH {
         void plocCompaction(PlocParams& plocParams, uint32_t index);
         void plocPrefixScan(PlocParams& plocParams);
 };
+
+}

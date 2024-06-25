@@ -7,6 +7,8 @@
 
 #include "imgui.h"
 
+namespace glr{
+
 Application::Application(ApplicationParameters parameters){
     _Parameters = parameters;
 }
@@ -422,4 +424,6 @@ Application Application::dummyApplication(){
 
 void Application::swapBuffers() const {
     glfwSwapBuffers(_Window);
+}
+
 }

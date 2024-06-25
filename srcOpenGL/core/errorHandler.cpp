@@ -1,6 +1,7 @@
 #include "errorHandler.hpp"
 #include <GLFW/glfw3.h>
 
+namespace glr{
 
 /**
  * Default error handler
@@ -51,4 +52,6 @@ void ErrorHandler::handle(const std::string& fileName, int lineNumber, ErrorCode
 void ErrorHandler::glfwError(const std::string& fileName, int lineNumber, const std::string& msg, ErrorLevel level){
     glfwTerminate();
     handle(fileName, lineNumber, GLFW_ERROR, msg, level);
+}
+
 }

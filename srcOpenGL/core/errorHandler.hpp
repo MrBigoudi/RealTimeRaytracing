@@ -2,6 +2,8 @@
 
 #include <string>
 
+namespace glr{
+
 /**
  * @enum The level of the error
 */
@@ -62,3 +64,5 @@ class ErrorHandler{
         static void defaultCase(const std::string& fileName, int lineNumber, const std::string& msg = "", ErrorLevel level = FATAL);
 
 };
+
+}

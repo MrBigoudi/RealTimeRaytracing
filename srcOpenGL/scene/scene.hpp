@@ -12,6 +12,8 @@
 
 #include <memory>
 
+namespace glr{
+
 class Scene;
 using ScenePtr = std::shared_ptr<Scene>;
 
@@ -56,3 +58,5 @@ class Scene{
         void recursiveTopDownTraversalBVH(std::vector<BVH_NodeGPU>& bvhNodesGPU, BVH_Ptr bvh, uint32_t nodeId) const;
         void recursiveBottomUpTraversalBVH(std::vector<BVH_NodeGPU>& bvhNodesGPU, BVH_Ptr bvh, uint32_t nodeId) const;
 };
+
+}

@@ -5,6 +5,8 @@
 
 #include "errorHandler.hpp"
 
+namespace glr{
+
 const std::string Shader::SHADER_DIRECTORY = std::string(PROJECT_SOURCE_DIR) + "/shaders/";
 
 Shader::~Shader(){
@@ -89,4 +91,6 @@ Shader::Shader(const std::string& path, ShaderType type){
 
     const std::string code = readShaderFile();
     compileShader(code);
+}
+
 }

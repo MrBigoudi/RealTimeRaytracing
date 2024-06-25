@@ -5,6 +5,7 @@ function(add_project_test TEST_NAME TEST_SOURCE)
     add_executable(${TEST_NAME} ${TEST_SOURCE})
     target_link_libraries(${TEST_NAME} PRIVATE 
         commonOpenGL
+        commonVulkan
         glfw 
         OpenGL
         OpenMP::OpenMP_CXX

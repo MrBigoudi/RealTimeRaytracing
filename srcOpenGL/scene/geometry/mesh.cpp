@@ -4,6 +4,8 @@
 #include <glm/ext.hpp>
 #include "errorHandler.hpp"
 
+namespace glr{
+
 uint32_t Mesh::_IdGenerator = 0;
 
 const std::string Mesh::MODELS_DIRECTORY = std::string(PROJECT_SOURCE_DIR) + "/resources/models/";
@@ -257,5 +259,7 @@ MeshPtr Mesh::load(const std::string& path){
     }
 
     return loadedModel;
+
+}
 
 }

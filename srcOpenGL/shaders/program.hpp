@@ -6,6 +6,8 @@
 #include <glad/gl.h>
 #include <map>
 
+namespace glr{
+
 class Program;
 using ProgramPtr = std::shared_ptr<Program>;
 
@@ -40,3 +42,5 @@ class Program{
     private:
         void linkShaders() const;
 };
+
+}

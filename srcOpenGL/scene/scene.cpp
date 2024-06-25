@@ -8,6 +8,8 @@
 
 #include "errorHandler.hpp"
 
+namespace glr{
+
 Scene::Scene(){
     createSSBO();
 }
@@ -215,4 +217,6 @@ void Scene::sendDataToGpu(ProgramPtr program){
     program->setUInt("uNbModels", _NbMeshes);
 
     glUseProgram(0);
+}
+
 }

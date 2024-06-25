@@ -2,6 +2,8 @@
 
 #include <cstdlib>
 
+namespace glr{
+
 uint32_t Triangle::_IdGenerator = 0;
 
 Triangle::Triangle(const glm::vec4& p0, const glm::vec4& p1, const glm::vec4& p2, uint32_t modelId){
@@ -28,4 +30,6 @@ glm::vec3 Triangle::getCentroid(const TriangleGPU& triangle){
 
 glm::vec3 Triangle::getCentroid(const TriangleGPU& triangle, const glm::mat4& model){
     return glm::vec3((1.f/3.f) * model * (triangle._P0 + triangle._P1 + triangle._P2));
+}
+
 }

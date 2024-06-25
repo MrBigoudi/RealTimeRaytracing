@@ -4,6 +4,8 @@
 #include <vector>
 #include <memory>
 
+namespace glr{
+
 class Mesh;
 using MeshPtr = std::shared_ptr<Mesh>;
 
@@ -42,3 +44,5 @@ class Mesh{
         static MeshPtr load(const std::string& path);
 
 };
+
+}

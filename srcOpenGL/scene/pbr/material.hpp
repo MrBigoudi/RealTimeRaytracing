@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <glm/glm.hpp>
 
+namespace glr{
+
 #define MAX_NB_MATERIALS 2<<15
 
 
@@ -22,3 +24,5 @@ class Material{
         Material(const glm::vec4& color);
         Material();
 };
+
+}

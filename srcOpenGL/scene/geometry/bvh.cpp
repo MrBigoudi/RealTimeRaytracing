@@ -6,6 +6,8 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/string_cast.hpp>
 
+namespace glr{
+
 BVH::BVH(uint32_t nbTriangles,
     const std::vector<TriangleGPU>& unsortedTriangles,
     const std::vector<MeshModelGPU>& meshesInTheScene){
@@ -573,4 +575,6 @@ void PlocParams::printPrefixScan() const {
         }
     }
     fprintf(stdout, " ]\n");
+}
+
 }

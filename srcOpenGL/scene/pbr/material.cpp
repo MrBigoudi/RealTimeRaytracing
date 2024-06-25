@@ -2,6 +2,8 @@
 
 #include <cstdlib>
 
+namespace glr{
+
 uint32_t Material::_IdGenerator = 0;
 
 
@@ -20,4 +22,6 @@ Material::Material(){
         static_cast<float>(rand()) / RAND_MAX, 
         1.f
     );
+}
+
 }

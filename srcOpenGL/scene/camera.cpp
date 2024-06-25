@@ -1,6 +1,8 @@
 #include "camera.hpp"
 #include <glm/ext.hpp>
 
+namespace glr{
+
 Camera::Camera(
     const glm::vec3& position,
     float aspectRatio,
@@ -115,4 +117,5 @@ void Camera::updateCameraVectors(){
     // also re-calculate the Right and Up vector
     _Right = glm::normalize(glm::cross(_At, _WorldUp));
     _Up    = glm::normalize(glm::cross(_Right, _At));
+}
 }

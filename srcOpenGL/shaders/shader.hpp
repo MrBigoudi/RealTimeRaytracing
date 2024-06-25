@@ -4,6 +4,8 @@
 #include <string>
 #include <glad/gl.h>
 
+namespace glr{
+
 class Shader;
 using ShaderPtr = std::shared_ptr<Shader>;
 
@@ -38,3 +40,5 @@ class Shader{
         void compileShader(const std::string& shaderCode);
 
 };
+
+}

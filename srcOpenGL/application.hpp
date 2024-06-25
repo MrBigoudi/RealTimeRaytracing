@@ -9,6 +9,8 @@
 #include "camera.hpp"
 #include "scene.hpp"
 
+namespace glr{
+
 struct ApplicationFPS {
     public:
         bool _DisplayFPS = true;
@@ -107,3 +109,5 @@ class Application {
         void swapBuffers() const;
 
 };
+
+}

@@ -2,6 +2,8 @@
 
 #include "application.hpp"
 
+namespace glr{
+
 MouseParamters Input::_Mouse = {
     ._Mode = MOUSE_MODE_CAMERA,
     ._NeedsToBeInit = true,
@@ -77,6 +79,6 @@ void Input::cameraInput(GLFWwindow* window, CameraPtr camera, float dt){
         camera->_Accelerate = false;
     }
 
-
+}
 
 }

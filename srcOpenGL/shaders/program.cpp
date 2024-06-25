@@ -6,6 +6,8 @@
 #include <vector>
 #include "errorHandler.hpp"
 
+namespace glr{
+
 void Program::use() const {
     glUseProgram(_Id);
 }
@@ -139,4 +141,6 @@ void Program::setMat4(const std::string & name, const glm::mat4 & value) const {
 
 GLuint Program::getId() const{
     return _Id;
+}
+
 }

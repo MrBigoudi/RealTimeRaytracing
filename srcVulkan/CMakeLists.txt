@@ -2,6 +2,8 @@
 add_library(commonVulkan)
 
 set(SOURCE_FILES 
+    glfwInit.cpp
+    vulkanInit.cpp
     application.cpp
 )
 
@@ -34,4 +36,7 @@ target_link_libraries(appVersionVulkan PRIVATE
     OpenMP::OpenMP_CXX
     cflags 
     tinyobjloader
+    vk-bootstrap::vk-bootstrap
 )
+
+add_subdirectory(dep)
