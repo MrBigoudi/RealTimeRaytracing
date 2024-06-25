@@ -4,6 +4,8 @@
 
 #include "application.hpp"
 
+namespace glr{
+
 
 ///// constants
 const uint32_t INPUT_BUFFER_SIZE = 2 << 15;
@@ -120,6 +122,9 @@ void testRandomValues(ProgramPtr program){
     fprintf(stderr, "\tOk\n");
 }
 
+}
+
+using namespace glr;
 
 
 ///// main

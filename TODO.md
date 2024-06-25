@@ -1,5 +1,7 @@
 # Todo list
 
+- move to vulkan
+- use slang shading language
 
 - add debug time graphs
 

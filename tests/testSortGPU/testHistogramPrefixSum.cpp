@@ -4,6 +4,7 @@
 
 #include "application.hpp"
 
+namespace glr{
 
 ///// constants
 const uint32_t INPUT_BUFFER_SIZE = 32;
@@ -176,7 +177,9 @@ void testKnownValues(ProgramPtr program){
     runTest(program, valuesToSort, expectedResults);
     fprintf(stderr, "\tOk\n");
 }
+}
 
+using namespace glr;
 
 
 ///// main
