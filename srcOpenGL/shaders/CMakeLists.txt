@@ -8,14 +8,14 @@ set(SHADERS_HEADER_FILES
     shader.hpp
 )
 
-target_sources(common 
+target_sources(commonOpenGL 
     PUBLIC 
         ${SHADERS_HEADER_FILES}
     PRIVATE 
         ${SHADERS_SOURCE_FILES}
 )
 
-target_include_directories(common 
+target_include_directories(commonOpenGL 
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
         $<INSTALL_INTERFACE:include>

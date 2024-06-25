@@ -5,7 +5,7 @@
 
 #include "errorHandler.hpp"
 
-const std::string Shader::SHADER_DIRECTORY = std::string(PROJECT_SOURCE_DIR) + "/src/shaders/shaderCodes/";
+const std::string Shader::SHADER_DIRECTORY = std::string(PROJECT_SOURCE_DIR) + "/shaders/";
 
 Shader::~Shader(){
     glDeleteShader(_Id);

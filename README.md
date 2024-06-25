@@ -12,6 +12,7 @@ git clone git@github.com:MrBigoudi/RealTimeRaytracing.git
 Then launch the project
 ```sh
 cd RealTimeRaytracing
+./run_app.sh --help
 ./run_app.sh
 ```
 

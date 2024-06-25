@@ -31,14 +31,14 @@ set(IMGUI_HEADER_FILES
     imgui/imstb_truetype.h
 )
 
-target_sources(common 
+target_sources(commonOpenGL 
     PUBLIC 
         ${GLAD_HEADER_FILES} ${IMGUI_HEADER_FILES}
     PRIVATE 
         ${GLAD_SOURCE_FILES} ${IMGUI_SOURCE_FILES}
 )
 
-target_include_directories(common PUBLIC
+target_include_directories(commonOpenGL PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/glad/include/
     ${CMAKE_CURRENT_SOURCE_DIR}/imgui/
     ${CMAKE_CURRENT_SOURCE_DIR}/imgui/backends

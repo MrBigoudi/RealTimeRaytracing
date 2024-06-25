@@ -44,20 +44,9 @@ find_package(glm REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(OpenMP REQUIRED)
 find_package(tinyobjloader REQUIRED)
+find_package(Vulkan REQUIRED)
 
 # Add subdirectories
-add_subdirectory(src)
+add_subdirectory(srcOpenGL)
+add_subdirectory(srcVulkan)
 add_subdirectory(tests)
-
-# Add executable
-add_executable(${PROJECT_NAME} main.cpp)
-
-# Link dependencies
-target_link_libraries(${PROJECT_NAME} PRIVATE 
-    common
-    glfw 
-    OpenGL
-    OpenMP::OpenMP_CXX
-    cflags 
-    tinyobjloader
-)
