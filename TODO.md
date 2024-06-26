@@ -2,6 +2,7 @@
 
 - move to vulkan
 - use slang shading language
+- break vulkanInit.cpp into multiple cpp files
 
 - add debug time graphs
 

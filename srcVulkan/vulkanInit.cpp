@@ -1,7 +1,11 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+#define VMA_IMPLEMENTATION
+#include "vk_mem_alloc.h"
 
 #include "application.hpp"
+
+#include <fstream>
 
 namespace vkr{
 
@@ -133,7 +137,8 @@ void Application::destroyGraphicsQueue(){
 
 void Application::initSwapChain(bool recreate){
     // get width and height in pixels
-    int width, height;
+    int width = 0;
+    int height = 0;
     glfwGetFramebufferSize(_Window, &width, &height);
 
     // setup builder
@@ -143,7 +148,7 @@ void Application::initSwapChain(bool recreate){
 		.set_desired_format(VkSurfaceFormatKHR{ .format = VK_FORMAT_B8G8R8A8_SRGB, .colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR })
 		//use vsync present mode
 		.set_desired_present_mode(VK_PRESENT_MODE_FIFO_KHR)
-		.set_desired_extent(width, height)
+		.set_desired_extent(static_cast<uint32_t>(width), static_cast<uint32_t>(height))
 		.add_image_usage_flags(VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 
     // create or recreate swap chain
@@ -522,6 +527,382 @@ void Application::queuePresent(VkPresentInfoKHR* presentInfo){
 }
 
 
+void Application::initMemoryAllocator(){
+    // initialize the memory allocator
+    VmaAllocatorCreateInfo allocatorInfo = {};
+    allocatorInfo.physicalDevice = _VulkanParameters._PhysicalDevice;
+    allocatorInfo.device = _VulkanParameters._Device;
+    allocatorInfo.instance = _VulkanParameters._Instance;
+    allocatorInfo.flags = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
+    VkResult result = vmaCreateAllocator(&allocatorInfo, &_VulkanParameters._Allocator);
+    if(result != VK_SUCCESS){
+        fprintf(stderr, "Failed to create the memory allocator!\n");
+        exit(EXIT_FAILURE);
+    }
+}
+
+void Application::destroyMemoryAllocator(){
+    vmaDestroyAllocator(_VulkanParameters._Allocator);
+}
+
+VkImageCreateInfo Application::imageCreateInfo(VkFormat format, VkImageUsageFlags usageFlags, VkExtent3D extent){
+    VkImageCreateInfo info = {};
+    info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    info.pNext = nullptr;
+
+    info.imageType = VK_IMAGE_TYPE_2D;
+
+    info.format = format;
+    info.extent = extent;
+
+    info.mipLevels = 1;
+    info.arrayLayers = 1;
+
+    //for MSAA. we will not be using it by default, so default it to 1 sample per pixel.
+    info.samples = VK_SAMPLE_COUNT_1_BIT;
+
+    //optimal tiling, which means the image is stored on the best gpu format
+    info.tiling = VK_IMAGE_TILING_OPTIMAL;
+    info.usage = usageFlags;
+
+    return info;
+}
+
+VkImageViewCreateInfo Application::imageviewCreateInfo(VkFormat format, VkImage image, VkImageAspectFlags aspectFlags){
+    // build a image-view for the depth image to use for rendering
+    VkImageViewCreateInfo info = {};
+    info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    info.pNext = nullptr;
+
+    info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    info.image = image;
+    info.format = format;
+    info.subresourceRange.baseMipLevel = 0;
+    info.subresourceRange.levelCount = 1;
+    info.subresourceRange.baseArrayLayer = 0;
+    info.subresourceRange.layerCount = 1;
+    info.subresourceRange.aspectMask = aspectFlags;
+
+    return info;
+}
+
+void Application::createImage(VkImageCreateInfo* rimg_info, VmaAllocationCreateInfo* rimg_allocinfo){
+	VkResult result = vmaCreateImage(_VulkanParameters._Allocator, rimg_info, rimg_allocinfo, &_DrawImage._Image, &_DrawImage._Allocation, nullptr);
+    if(result != VK_SUCCESS){
+        fprintf(stderr, "Failed to create an image!\n");
+        exit(EXIT_FAILURE);
+    }    
+}
+
+void Application::createImageView(VkImageViewCreateInfo* rview_info){
+	VkResult result = vkCreateImageView(
+        _VulkanParameters._Device, 
+        rview_info, 
+        nullptr, 
+        &_DrawImage._ImageView
+    );
+}
+
+void Application::initImageView(){
+    //draw image size will match the window
+	VkExtent3D drawImageExtent = {
+		_Parameters._WindowWidth,
+		_Parameters._WindowHeight,
+		1
+	};
+
+	//hardcoding the draw format to 32 bit float
+	_DrawImage._ImageFormat = VK_FORMAT_R16G16B16A16_SFLOAT;
+	_DrawImage._ImageExtent = drawImageExtent;
+
+	VkImageUsageFlags drawImageUsages{};
+	drawImageUsages |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+	drawImageUsages |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+	drawImageUsages |= VK_IMAGE_USAGE_STORAGE_BIT;
+	drawImageUsages |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
+	VkImageCreateInfo rimg_info = imageCreateInfo(_DrawImage._ImageFormat, drawImageUsages, drawImageExtent);
+
+	//for the draw image, we want to allocate it from gpu local memory
+	VmaAllocationCreateInfo rimg_allocinfo = {};
+	rimg_allocinfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+	rimg_allocinfo.requiredFlags = VkMemoryPropertyFlags(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+	//allocate and create the image
+	createImage(&rimg_info, &rimg_allocinfo);
+
+	//build a image-view for the draw image to use for rendering
+	VkImageViewCreateInfo rview_info = imageviewCreateInfo(_DrawImage._ImageFormat, _DrawImage._Image, VK_IMAGE_ASPECT_COLOR_BIT);
+    createImageView(&rview_info);
+}
+
+void Application::destroyImageView(){
+    vkDestroyImageView(_VulkanParameters._Device, _DrawImage._ImageView, nullptr);
+    vmaDestroyImage(_VulkanParameters._Allocator, _DrawImage._Image, _DrawImage._Allocation);
+}
+
+void Application::copyImageToImage(VkCommandBuffer cmd, VkImage source, VkImage destination, VkExtent2D srcSize, VkExtent2D dstSize){
+	VkImageBlit2 blitRegion{ .sType = VK_STRUCTURE_TYPE_IMAGE_BLIT_2, .pNext = nullptr };
+
+	blitRegion.srcOffsets[1].x = srcSize.width;
+	blitRegion.srcOffsets[1].y = srcSize.height;
+	blitRegion.srcOffsets[1].z = 1;
+
+	blitRegion.dstOffsets[1].x = dstSize.width;
+	blitRegion.dstOffsets[1].y = dstSize.height;
+	blitRegion.dstOffsets[1].z = 1;
+
+	blitRegion.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	blitRegion.srcSubresource.baseArrayLayer = 0;
+	blitRegion.srcSubresource.layerCount = 1;
+	blitRegion.srcSubresource.mipLevel = 0;
+
+	blitRegion.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	blitRegion.dstSubresource.baseArrayLayer = 0;
+	blitRegion.dstSubresource.layerCount = 1;
+	blitRegion.dstSubresource.mipLevel = 0;
+
+	VkBlitImageInfo2 blitInfo{ .sType = VK_STRUCTURE_TYPE_BLIT_IMAGE_INFO_2, .pNext = nullptr };
+	blitInfo.dstImage = destination;
+	blitInfo.dstImageLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+	blitInfo.srcImage = source;
+	blitInfo.srcImageLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+	blitInfo.filter = VK_FILTER_LINEAR;
+	blitInfo.regionCount = 1;
+	blitInfo.pRegions = &blitRegion;
+
+	vkCmdBlitImage2(cmd, &blitInfo);
+}
+
+void DescriptorLayoutBuilder::addBinding(uint32_t binding, VkDescriptorType type){
+    VkDescriptorSetLayoutBinding newbind {};
+    newbind.binding = binding;
+    newbind.descriptorCount = 1;
+    newbind.descriptorType = type;
+    _Bindings.push_back(newbind);
+}
+
+void DescriptorLayoutBuilder::clear(){
+    _Bindings.clear();
+}
+
+VkDescriptorSetLayout DescriptorLayoutBuilder::build(VkDevice device, VkShaderStageFlags shaderStages, void* pNext, VkDescriptorSetLayoutCreateFlags flags)
+{
+    for (VkDescriptorSetLayoutBinding& b : _Bindings) {
+        b.stageFlags |= shaderStages;
+    }
+
+    VkDescriptorSetLayoutCreateInfo info = {.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
+    info.pNext = pNext;
+
+    info.pBindings = _Bindings.data();
+    info.bindingCount = static_cast<uint32_t>(_Bindings.size());
+    info.flags = flags;
+
+    VkDescriptorSetLayout set;
+    VkResult result = vkCreateDescriptorSetLayout(device, &info, nullptr, &set);
+    if(result != VK_SUCCESS){
+        fprintf(stderr, "Failed to create the descriptor set layout!\n");
+        exit(EXIT_FAILURE);
+    }
+
+    return set;
+}
+
+void DescriptorAllocator::initPool(VkDevice device, uint32_t maxSets, std::span<PoolSizeRatio> poolRatios){
+    std::vector<VkDescriptorPoolSize> poolSizes;
+    for (PoolSizeRatio ratio : poolRatios) {
+        poolSizes.push_back(VkDescriptorPoolSize{
+            .type = ratio._Type,
+            .descriptorCount = uint32_t(ratio._Ratio * maxSets)
+        });
+    }
+
+	VkDescriptorPoolCreateInfo pool_info = {.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO};
+	pool_info.flags = 0;
+	pool_info.maxSets = maxSets;
+	pool_info.poolSizeCount = (uint32_t)poolSizes.size();
+	pool_info.pPoolSizes = poolSizes.data();
+
+	VkResult result = vkCreateDescriptorPool(device, &pool_info, nullptr, &_Pool);
+    if(result != VK_SUCCESS){
+        fprintf(stderr, "Failed to allocate the descriptor pool!\n");
+        exit(EXIT_FAILURE);
+    }
+}
+
+void DescriptorAllocator::clearDescriptors(VkDevice device){
+    VkResult result = vkResetDescriptorPool(device, _Pool, 0);
+    if(result != VK_SUCCESS){
+        fprintf(stderr, "Failed to reset the pool!\n");
+        exit(EXIT_FAILURE);
+    }
+}
+
+void DescriptorAllocator::destroyPool(VkDevice device){
+    vkDestroyDescriptorPool(device,_Pool,nullptr);
+}
+
+VkDescriptorSet DescriptorAllocator::allocate(VkDevice device, VkDescriptorSetLayout layout)
+{
+    VkDescriptorSetAllocateInfo allocInfo = {.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
+    allocInfo.pNext = nullptr;
+    allocInfo.descriptorPool = _Pool;
+    allocInfo.descriptorSetCount = 1;
+    allocInfo.pSetLayouts = &layout;
+
+    VkDescriptorSet ds;
+    VkResult result = vkAllocateDescriptorSets(device, &allocInfo, &ds);
+    if(result != VK_SUCCESS){
+        fprintf(stderr, "Failed to allocate the descriptor sets!\n");
+        exit(EXIT_FAILURE);
+    }
+
+    return ds;
+}
+
+void Application::initDescriptors(){
+	//create a descriptor pool that will hold 10 sets with 1 image each
+	std::vector<DescriptorAllocator::PoolSizeRatio> sizes ={
+		{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1 }
+	};
+
+	_GlobalDescriptorAllocator.initPool(_VulkanParameters._Device, 10, sizes);
+
+	//make the descriptor set layout for our compute draw
+	{
+		DescriptorLayoutBuilder builder;
+		builder.addBinding(0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);
+		_DrawImageDescriptorLayout = builder.build(_VulkanParameters._Device, VK_SHADER_STAGE_COMPUTE_BIT);
+	}
+
+    //allocate a descriptor set for our draw image
+	_DrawImageDescriptors = _GlobalDescriptorAllocator.allocate(_VulkanParameters._Device, _DrawImageDescriptorLayout);	
+
+	VkDescriptorImageInfo imgInfo{};
+	imgInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+	imgInfo.imageView = _DrawImage._ImageView;
+	
+	VkWriteDescriptorSet drawImageWrite = {};
+	drawImageWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	drawImageWrite.pNext = nullptr;
+	
+	drawImageWrite.dstBinding = 0;
+	drawImageWrite.dstSet = _DrawImageDescriptors;
+	drawImageWrite.descriptorCount = 1;
+	drawImageWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+	drawImageWrite.pImageInfo = &imgInfo;
+
+	vkUpdateDescriptorSets(_VulkanParameters._Device, 1, &drawImageWrite, 0, nullptr);
+}
+
+void Application::destroyDescriptors(){
+    _GlobalDescriptorAllocator.destroyPool(_VulkanParameters._Device);
+    vkDestroyDescriptorSetLayout(_VulkanParameters._Device, _DrawImageDescriptorLayout, nullptr);
+}
+
+bool Application::loadShaderModule(const char* filePath, VkDevice device, VkShaderModule* outShaderModule){
+    // open the file. With cursor at the end
+    std::ifstream file(filePath, std::ios::ate | std::ios::binary);
+
+    if (!file.is_open()) {
+        return false;
+    }
+
+    // find what the size of the file is by looking up the location of the cursor
+    // because the cursor is at the end, it gives the size directly in bytes
+    size_t fileSize = (size_t)file.tellg();
+
+    // spirv expects the buffer to be on uint32, so make sure to reserve a int
+    // vector big enough for the entire file
+    std::vector<uint32_t> buffer(fileSize / sizeof(uint32_t));
+
+    // put file cursor at beginning
+    file.seekg(0);
+
+    // load the entire file into the buffer
+    file.read((char*)buffer.data(), fileSize);
+
+    // now that the file is loaded into the buffer, we can close it
+    file.close();
+
+    // create a new shader module, using the buffer we loaded
+    VkShaderModuleCreateInfo createInfo = {};
+    createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    createInfo.pNext = nullptr;
+
+    // codeSize has to be in bytes, so multply the ints in the buffer by size of
+    // int to know the real size of the buffer
+    createInfo.codeSize = buffer.size() * sizeof(uint32_t);
+    createInfo.pCode = buffer.data();
+
+    // check that the creation goes well.
+    VkShaderModule shaderModule;
+    if (vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
+        return false;
+    }
+    *outShaderModule = shaderModule;
+    return true;
+}
+
+void Application::initPipelines(){
+    initBackgroundPipelines();
+}
+
+void Application::destroyPipelines(){
+    destroyBackgroundPipelines();
+}
+
+void Application::initBackgroundPipelines(){
+    VkPipelineLayoutCreateInfo computeLayout{};
+	computeLayout.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	computeLayout.pNext = nullptr;
+	computeLayout.pSetLayouts = &_DrawImageDescriptorLayout;
+	computeLayout.setLayoutCount = 1;
+
+	VkResult result = vkCreatePipelineLayout(_VulkanParameters._Device, &computeLayout, nullptr, &_gradientPipelineLayout);
+    if(result != VK_SUCCESS){
+        fprintf(stderr, "Failed to init the backgroud pipelines layouts!\n");
+        exit(EXIT_FAILURE);
+    }
+
+    //layout code
+	VkShaderModule computeDrawShader;
+    const std::string COMPILED_SHADER_DIRECTORY = std::string(PROJECT_SOURCE_DIR) + "/shaders/compiled/";
+
+	if (!loadShaderModule((COMPILED_SHADER_DIRECTORY + std::string("gradient.comp.spv")).c_str(), _VulkanParameters._Device, &computeDrawShader)){
+		fprintf(stderr, "Error when building the compute shader!\n");
+        exit(EXIT_FAILURE);
+	}
+
+	VkPipelineShaderStageCreateInfo stageinfo{};
+	stageinfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	stageinfo.pNext = nullptr;
+	stageinfo.stage = VK_SHADER_STAGE_COMPUTE_BIT;
+	stageinfo.module = computeDrawShader;
+	stageinfo.pName = "main";
+
+	VkComputePipelineCreateInfo computePipelineCreateInfo{};
+	computePipelineCreateInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+	computePipelineCreateInfo.pNext = nullptr;
+	computePipelineCreateInfo.layout = _gradientPipelineLayout;
+	computePipelineCreateInfo.stage = stageinfo;
+	
+	result = vkCreateComputePipelines(_VulkanParameters._Device,VK_NULL_HANDLE,1,&computePipelineCreateInfo, nullptr, &_gradientPipeline);
+    if(result != VK_SUCCESS){
+        fprintf(stderr, "Failed to create the compute shader pipelines!\n");
+        exit(EXIT_FAILURE);
+    }
+
+    vkDestroyShaderModule(_VulkanParameters._Device, computeDrawShader, nullptr);
+}
+
+void Application::destroyBackgroundPipelines(){
+    vkDestroyPipelineLayout(_VulkanParameters._Device, _gradientPipelineLayout, nullptr);
+    vkDestroyPipeline(_VulkanParameters._Device, _gradientPipeline, nullptr);
+}
+
+
 }
 
 namespace vkr {
@@ -532,15 +913,23 @@ void Application::initVulkanParameters(){
     initPhysicalDevice();
     initDevice();
     initGraphicsQueue();
+    initMemoryAllocator();
     initSwapChain();
+    initImageView();
     initCommands();
     initSyncStructures();
+    initDescriptors();
+    initPipelines();
 }
 
 void Application::destroyVulkanParameters(){
+    destroyPipelines();
+    destroyDescriptors();
     destroySyncStructures();
     destroyCommands();
+    destroyImageView();
     destroySwapChain();
+    destroyMemoryAllocator();
     destroyGraphicsQueue();
     destroyDevice();
     destroyPhysicalDevice();

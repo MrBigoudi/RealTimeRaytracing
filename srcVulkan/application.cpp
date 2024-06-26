@@ -25,6 +25,22 @@ void Application::cleanup(){
     destroyGLFW();
 }
 
+void Application::drawBackground(VkCommandBuffer cmd){
+	VkClearColorValue clearValue = _Parameters._BackgroundColor;
+	VkImageSubresourceRange clearRange = imageSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT);
+	//clear image
+	vkCmdClearColorImage(cmd, _DrawImage._Image, VK_IMAGE_LAYOUT_GENERAL, &clearValue, 1, &clearRange);
+
+    // bind the gradient drawing compute pipeline
+	vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, _gradientPipeline);
+
+	// bind the descriptor set containing the draw image for the compute pipeline
+	vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, _gradientPipelineLayout, 0, 1, &_DrawImageDescriptors, 0, nullptr);
+
+	// execute the compute pipeline dispatch. We are using 16x16 workgroup size so we need to divide by it
+	vkCmdDispatch(cmd, std::ceil(_VulkanParameters._DrawExtent.width / 16.0), std::ceil(_VulkanParameters._DrawExtent.height / 16.0), 1);
+}
+
 void Application::draw(){
     // wait until the gpu has finished rendering the last frame. 
     waitFences();
@@ -39,22 +55,29 @@ void Application::draw(){
 	//begin the command buffer recording. We will use this command buffer exactly once, so we want to let vulkan know that
 	VkCommandBufferBeginInfo cmdBeginInfo = commandBufferBeginInfo(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 	//start the command buffer recording
+    _VulkanParameters._DrawExtent.width = _DrawImage._ImageExtent.width;
+    _VulkanParameters._DrawExtent.height = _DrawImage._ImageExtent.height;
 	beginCommandBuffer(cmd, cmdBeginInfo);
 
-    //make the swapchain image into writeable mode before rendering
+    // transition our main draw image into general layout so we can write into it
+	// we will overwrite it all so we dont care about what was the older layout
     std::vector<VkImage> swapchainImages = getSwapChainImages();
-	transitionImage(cmd, swapchainImages[swapchainImageIndex], VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
+	transitionImage(cmd, _DrawImage._Image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
 
-	VkImageSubresourceRange clearRange = imageSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT);
+	drawBackground(cmd);
 
-	//clear image
-	vkCmdClearColorImage(cmd, swapchainImages[swapchainImageIndex], VK_IMAGE_LAYOUT_GENERAL, &_Parameters._BackgroundColor, 1, &clearRange);
+	//transition the draw image and the swapchain image into their correct transfer layouts
+	transitionImage(cmd, _DrawImage._Image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+	transitionImage(cmd, swapchainImages[swapchainImageIndex], VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-	//make the swapchain image into presentable mode
-	transitionImage(cmd, swapchainImages[swapchainImageIndex],VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+	// execute a copy from the draw image into the swapchain
+	copyImageToImage(cmd, _DrawImage._Image, swapchainImages[swapchainImageIndex], _VulkanParameters._DrawExtent, _VulkanParameters._SwapChain.extent);
+
+	// set swapchain image layout to Present so we can show it on the screen
+	transitionImage(cmd, swapchainImages[swapchainImageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
 	//finalize the command buffer (we can no longer add commands, but it can now be executed)
-	endCommandBuffer(cmd);
+    endCommandBuffer(cmd);
 
     //prepare the submission to the queue. 
 	//we want to wait on the _presentSemaphore, as that semaphore is signaled when the swapchain is ready

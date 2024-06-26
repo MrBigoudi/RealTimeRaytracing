@@ -37,6 +37,7 @@ target_link_libraries(appVersionVulkan PRIVATE
     cflags 
     tinyobjloader
     vk-bootstrap::vk-bootstrap
+    GPUOpen::VulkanMemoryAllocator
 )
 
 add_subdirectory(dep)

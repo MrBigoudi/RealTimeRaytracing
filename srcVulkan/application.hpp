@@ -3,10 +3,12 @@
 #include <GLFW/glfw3.h>
 #include <cstdint>
 #include <glm/glm.hpp>
+#include <span>
 #include <string>
 #include <memory>
 
 #include "VkBootstrap.h"
+#include "vk_mem_alloc.h"
 
 namespace vkr{
 
@@ -15,30 +17,61 @@ struct ApplicationParameters {
     uint32_t _VulkanVersionMinor = 3;
     uint32_t _VulkanVersionPatch = 0;
 
-    uint32_t _WindowWidth = 1280;
-    uint32_t _WindowHeight = 720;
-    uint32_t _ViewportWidth = 1280;
-    uint32_t _ViewportHeight = 720;
+    uint32_t _WindowWidth = 1700;
+    uint32_t _WindowHeight = 900;
     std::string _WindowTitle = "RayTracing";
     VkClearColorValue _BackgroundColor = {{0.2f, 0.3f, 0.3f, 1.f}};
 };
 
 struct VulkanAppParameters {
-    vkb::Instance _Instance;
-    VkSurfaceKHR _Surface;
-    vkb::PhysicalDevice _PhysicalDevice;
-    vkb::Device _Device;
-    VkQueue _GraphicsQueue;
-    uint32_t _GraphicsQueueFamilyIndex;
-    vkb::Swapchain _SwapChain;
+    vkb::Instance _Instance{};
+    VkSurfaceKHR _Surface{};
+    vkb::PhysicalDevice _PhysicalDevice{};
+    vkb::Device _Device{};
+    VkQueue _GraphicsQueue{};
+    uint32_t _GraphicsQueueFamilyIndex{};
+    vkb::Swapchain _SwapChain{};
+    VkExtent2D _DrawExtent{};
+    VmaAllocator _Allocator{};
+};
+
+struct AllocatedImage {
+    VkImage _Image{};
+    VkImageView _ImageView{};
+    VmaAllocation _Allocation{};
+    VkExtent3D _ImageExtent{};
+    VkFormat _ImageFormat{};
 };
 
 struct FrameData {
-    VkCommandPool _CommandPool;
-	VkCommandBuffer _MainCommandBuffer;
-    VkSemaphore _SwapchainSemaphore;
-    VkSemaphore _RenderSemaphore;
-	VkFence _RenderFence;
+    VkCommandPool _CommandPool{};
+	VkCommandBuffer _MainCommandBuffer{};
+    VkSemaphore _SwapchainSemaphore{};
+    VkSemaphore _RenderSemaphore{};
+	VkFence _RenderFence{};
+};
+
+struct DescriptorLayoutBuilder {
+    std::vector<VkDescriptorSetLayoutBinding> _Bindings;
+    void addBinding(uint32_t binding, VkDescriptorType type);
+    void clear();
+    VkDescriptorSetLayout build(VkDevice device, VkShaderStageFlags shaderStages, void* pNext = nullptr, VkDescriptorSetLayoutCreateFlags flags = 0);
+};
+
+struct DescriptorAllocator {
+
+    struct PoolSizeRatio{
+		VkDescriptorType _Type;
+		float _Ratio;
+    };
+
+    VkDescriptorPool _Pool;
+
+    void initPool(VkDevice device, uint32_t maxSets, std::span<PoolSizeRatio> poolRatios);
+    void clearDescriptors(VkDevice device);
+    void destroyPool(VkDevice device);
+
+    VkDescriptorSet allocate(VkDevice device, VkDescriptorSetLayout layout);
 };
 
 const uint32_t FRAME_OVERLAP = 2;
@@ -51,10 +84,17 @@ class Application {
     private:
         ApplicationParameters _Parameters{};
         VulkanAppParameters _VulkanParameters{};
+        AllocatedImage _DrawImage{};
+        DescriptorAllocator _GlobalDescriptorAllocator{};
+        VkDescriptorSet _DrawImageDescriptors{};
+        VkDescriptorSetLayout _DrawImageDescriptorLayout{};
 
         GLFWwindow* _Window = nullptr;
         FrameData _Frames[FRAME_OVERLAP];
         uint32_t _FrameNumber = 0;
+
+        VkPipeline _gradientPipeline{};
+        VkPipelineLayout _gradientPipelineLayout{};
 
     public:
         Application();
@@ -64,6 +104,8 @@ class Application {
     private:
         void initInstance();
         void destroyInstance();
+        void initMemoryAllocator();
+        void destroyMemoryAllocator();
         void initSurface();
         void destroySurface();
         void initPhysicalDevice();
@@ -74,10 +116,16 @@ class Application {
         void destroyGraphicsQueue();
         void initSwapChain(bool recreate = false);
         void destroySwapChain();
+        void initImageView();
+        void destroyImageView();
         void initCommands();
         void destroyCommands();
         void initSyncStructures();
         void destroySyncStructures();
+        void initDescriptors();
+        void destroyDescriptors();
+        void initPipelines();
+        void destroyPipelines();
 
     // vulkan helpers
     private:
@@ -102,6 +150,15 @@ class Application {
         VkSemaphoreCreateInfo semaphoreCreateInfo(VkSemaphoreCreateFlags flags = 0);
         VkSemaphoreSubmitInfo semaphoreSubmitInfo(VkPipelineStageFlags2 stageMask, VkSemaphore semaphore);
         std::vector<VkImage> getSwapChainImages();
+        VkImageCreateInfo imageCreateInfo(VkFormat format, VkImageUsageFlags usageFlags, VkExtent3D extent);
+        VkImageViewCreateInfo imageviewCreateInfo(VkFormat format, VkImage image, VkImageAspectFlags aspectFlags);
+        void createImage(VkImageCreateInfo* rimg_info, VmaAllocationCreateInfo* rimg_allocinfo);
+        void createImageView(VkImageViewCreateInfo* rview_info);
+        static void copyImageToImage(VkCommandBuffer cmd, VkImage source, VkImage destination, VkExtent2D srcSize, VkExtent2D dstSize);
+        static bool loadShaderModule(const char* filePath, VkDevice device, VkShaderModule* outShaderModule);
+        void initBackgroundPipelines();
+        void destroyBackgroundPipelines();
+
 
     // init stuff
     private:
@@ -116,6 +173,7 @@ class Application {
     private:
         void init();
         void cleanup();
+        void drawBackground(VkCommandBuffer cmd);
         void draw();
         void processInput();
 
