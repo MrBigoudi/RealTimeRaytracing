@@ -44,8 +44,6 @@ find_package(glm REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(OpenMP REQUIRED)
 find_package(tinyobjloader REQUIRED)
-find_package(Vulkan REQUIRED)
-find_package(VulkanMemoryAllocator CONFIG REQUIRED)
 
 # Add subdirectories
 add_subdirectory(srcOpenGL)

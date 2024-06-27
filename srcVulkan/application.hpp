@@ -7,6 +7,9 @@
 #include <string>
 #include <memory>
 
+#include "slang.h"
+#include "slang-com-ptr.h"
+
 #include "VkBootstrap.h"
 #include "vk_mem_alloc.h"
 
@@ -17,8 +20,8 @@ struct ApplicationParameters {
     uint32_t _VulkanVersionMinor = 3;
     uint32_t _VulkanVersionPatch = 0;
 
-    uint32_t _WindowWidth = 1700;
-    uint32_t _WindowHeight = 900;
+    uint32_t _WindowWidth = 1280;
+    uint32_t _WindowHeight = 720;
     std::string _WindowTitle = "RayTracing";
     VkClearColorValue _BackgroundColor = {{0.2f, 0.3f, 0.3f, 1.f}};
 };
@@ -76,6 +79,11 @@ struct DescriptorAllocator {
 
 const uint32_t FRAME_OVERLAP = 2;
 
+struct SlangParameters{
+    Slang::ComPtr<slang::IGlobalSession> _GlobalSession;
+    Slang::ComPtr<slang::ISession> _Session{};
+};
+
 
 class Application;
 using ApplicationPtr = std::shared_ptr<Application>;
@@ -95,6 +103,8 @@ class Application {
 
         VkPipeline _gradientPipeline{};
         VkPipelineLayout _gradientPipelineLayout{};
+
+        SlangParameters _Slang{};
 
     public:
         Application();
@@ -124,6 +134,8 @@ class Application {
         void destroySyncStructures();
         void initDescriptors();
         void destroyDescriptors();
+        void initSlang();
+        void destroySlang();
         void initPipelines();
         void destroyPipelines();
 
@@ -155,7 +167,7 @@ class Application {
         void createImage(VkImageCreateInfo* rimg_info, VmaAllocationCreateInfo* rimg_allocinfo);
         void createImageView(VkImageViewCreateInfo* rview_info);
         static void copyImageToImage(VkCommandBuffer cmd, VkImage source, VkImage destination, VkExtent2D srcSize, VkExtent2D dstSize);
-        static bool loadShaderModule(const char* filePath, VkDevice device, VkShaderModule* outShaderModule);
+        static bool loadShaderModule(Slang::ComPtr<slang::IBlob> spirvCode, VkDevice device, VkShaderModule* outShaderModule);
         void initBackgroundPipelines();
         void destroyBackgroundPipelines();
 

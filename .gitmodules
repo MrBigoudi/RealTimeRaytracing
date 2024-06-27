@@ -1,3 +1,6 @@
+[submodule "srcVulkan/dep/slang"]
+	path = srcVulkan/dep/slang
+	url = https://github.com/shader-slang/slang.git
 [submodule "srcVulkan/dep/vk-bootstrap"]
 	path = srcVulkan/dep/vk-bootstrap
 	url = https://github.com/charles-lunarg/vk-bootstrap
