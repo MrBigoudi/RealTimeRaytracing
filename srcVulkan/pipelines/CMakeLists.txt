@@ -1,9 +1,10 @@
 set(PIPELINES_SOURCE_FILES
-    vkPipelines.cpp
     gradientPipeline.cpp
+    pipeline.cpp
 )
 
 set(PIPELINES_HEADER_FILES 
+    gradientPipeline.hpp
 )
 
 target_sources(commonVulkan 

@@ -7,11 +7,13 @@
 #include <string>
 #include <memory>
 
-#include "slang.h"
-#include "slang-com-ptr.h"
+#include <slang.h>
+#include <slang-com-ptr.h>
 
-#include "VkBootstrap.h"
-#include "vk_mem_alloc.h"
+#include <VkBootstrap.h>
+#include <vk_mem_alloc.h>
+
+#include "pipeline.hpp"
 
 namespace vkr{
 
@@ -80,8 +82,9 @@ struct DescriptorAllocator {
 const uint32_t FRAME_OVERLAP = 2;
 
 struct SlangParameters{
-    Slang::ComPtr<slang::IGlobalSession> _GlobalSession;
+    Slang::ComPtr<slang::IGlobalSession> _GlobalSession{};
     Slang::ComPtr<slang::ISession> _Session{};
+    std::vector<PipelinePtr> _Pipelines{};
 };
 
 
@@ -94,15 +97,10 @@ class Application {
         VulkanAppParameters _VulkanParameters{};
         AllocatedImage _DrawImage{};
         DescriptorAllocator _GlobalDescriptorAllocator{};
-        VkDescriptorSet _DrawImageDescriptors{};
-        VkDescriptorSetLayout _DrawImageDescriptorLayout{};
 
         GLFWwindow* _Window = nullptr;
         FrameData _Frames[FRAME_OVERLAP];
         uint32_t _FrameNumber = 0;
-
-        VkPipeline _GradientPipeline{};
-        VkPipelineLayout _GradientPipelineLayout{};
 
         SlangParameters _Slang{};
 
@@ -132,10 +130,10 @@ class Application {
         void destroyCommands();
         void initSyncStructures();
         void destroySyncStructures();
-        void initDescriptors();
-        void destroyDescriptors();
         void initSlang();
         void destroySlang();
+        void initPipelines();
+        void destroyPipelines();
 
     // vulkan helpers
     private:
@@ -166,7 +164,6 @@ class Application {
         static void transitionImage(VkCommandBuffer cmd, VkImage image, VkImageLayout currentLayout, VkImageLayout newLayout);
         static VkImageSubresourceRange imageSubresourceRange(VkImageAspectFlags aspectMask);
         static void copyImageToImage(VkCommandBuffer cmd, VkImage source, VkImage destination, VkExtent2D srcSize, VkExtent2D dstSize);
-        static bool loadShaderModule(Slang::ComPtr<slang::IBlob> spirvCode, VkDevice device, VkShaderModule* outShaderModule);
 
 
     // init stuff
@@ -177,19 +174,13 @@ class Application {
         void initWindow();
         void destroyGLFW();
         void destroyWindow();
-
-    // pipelines
-    private:
-        void initPipelines();
-        void destroyPipelines();
-        void initGradientPipelines();
-        void destroyGradientPipelines();
     
     // main functions
     private:
         void init();
         void cleanup();
         void drawBackground(VkCommandBuffer cmd);
+        void runPipelines(VkCommandBuffer cmd);
         void draw();
         void processInput();
 

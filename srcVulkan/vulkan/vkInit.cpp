@@ -13,7 +13,6 @@ void Application::initVulkanParameters(){
     initImageView();
     initCommands();
     initSyncStructures();
-    initDescriptors();
     initSlang();
     initPipelines();
 }
@@ -21,7 +20,6 @@ void Application::initVulkanParameters(){
 void Application::destroyVulkanParameters(){
     destroyPipelines();
     destroySlang();
-    destroyDescriptors();
     destroySyncStructures();
     destroyCommands();
     destroyImageView();

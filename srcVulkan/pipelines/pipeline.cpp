@@ -1,16 +1,10 @@
-#include "application.hpp"
+#include "pipeline.hpp"
 
 namespace vkr {
 
-void Application::initPipelines(){
-    initGradientPipelines();
-}
+const std::string Pipeline::COMPILED_SHADER_DIRECTORY = std::string(PROJECT_SOURCE_DIR) + "/shaders/compiled/";
 
-void Application::destroyPipelines(){
-    destroyGradientPipelines();
-}
-
-bool Application::loadShaderModule(Slang::ComPtr<slang::IBlob> spirvCode, VkDevice device, VkShaderModule* outShaderModule){
+bool Pipeline::loadShaderModule(Slang::ComPtr<slang::IBlob> spirvCode, VkDevice device, VkShaderModule* outShaderModule){
 
     // create a new shader module, using the buffer we loaded
     VkShaderModuleCreateInfo createInfo = {};
@@ -30,5 +24,22 @@ bool Application::loadShaderModule(Slang::ComPtr<slang::IBlob> spirvCode, VkDevi
     *outShaderModule = shaderModule;
     return true;
 }
+
+VkPipeline Pipeline::getPipeline() const{
+    return _Pipeline;
+}
+
+VkPipelineLayout Pipeline::getPipelineLayout() const{
+    return _PipelineLayout;
+}
+
+std::vector<VkDescriptorSet> Pipeline::getDescriptors() const {
+    return _Descriptors;
+}
+
+std::vector<VkDescriptorSetLayout> Pipeline::getDescriptorLayouts() const {
+    return _DescriptorLayouts;
+}
+
 
 }

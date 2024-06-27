@@ -1,12 +1,11 @@
+#include "gradientPipeline.hpp"
 #include "application.hpp"
 
 #include "dep/slang/source/core/slang-list.h"
 
-
 namespace vkr {
 
-void Application::initGradientPipelines(){
-    const std::string COMPILED_SHADER_DIRECTORY = std::string(PROJECT_SOURCE_DIR) + "/shaders/compiled/";
+void GradientPipeline::init(const SlangParameters& slangParamaters, const VulkanAppParameters& vulkanParameters){
     // Once the slang session has been obtained, we can start loading code into it.
     //
     // The simplest way to load code is by calling `loadModule` with the name of a Slang
@@ -21,7 +20,7 @@ void Application::initGradientPipelines(){
     slang::IModule* slangModule = nullptr;
     {
         Slang::ComPtr<slang::IBlob> diagnosticsBlob;
-        slangModule = _Slang._Session->loadModule((COMPILED_SHADER_DIRECTORY + "gradient").c_str(), diagnosticsBlob.writeRef());
+        slangModule = slangParamaters._Session->loadModule((Pipeline::COMPILED_SHADER_DIRECTORY + "gradient").c_str(), diagnosticsBlob.writeRef());
         if(!slangModule){
             fprintf(stderr, 
             "Failed to load the slang module: %s\n",
@@ -69,7 +68,7 @@ void Application::initGradientPipelines(){
     Slang::ComPtr<slang::IComponentType> composedProgram;
     {
         Slang::ComPtr<slang::IBlob> diagnosticsBlob;
-        SlangResult result = _Slang._Session->createCompositeComponentType(
+        SlangResult result = slangParamaters._Session->createCompositeComponentType(
             componentTypes.getBuffer(),
             componentTypes.getCount(),
             composedProgram.writeRef(),
@@ -102,10 +101,10 @@ void Application::initGradientPipelines(){
     VkPipelineLayoutCreateInfo computeLayout{};
 	computeLayout.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	computeLayout.pNext = nullptr;
-	computeLayout.pSetLayouts = &_DrawImageDescriptorLayout;
-	computeLayout.setLayoutCount = 1;
+	computeLayout.pSetLayouts = _DescriptorLayouts.data();
+	computeLayout.setLayoutCount = _DescriptorLayouts.size();
 
-	VkResult result = vkCreatePipelineLayout(_VulkanParameters._Device, &computeLayout, nullptr, &_GradientPipelineLayout);
+	VkResult result = vkCreatePipelineLayout(vulkanParameters._Device, &computeLayout, nullptr, &_PipelineLayout);
     if(result != VK_SUCCESS){
         fprintf(stderr, "Failed to init the backgroud pipelines layouts!\n");
         exit(EXIT_FAILURE);
@@ -113,7 +112,7 @@ void Application::initGradientPipelines(){
 
     //layout code
 	VkShaderModule computeDrawShader;
-	if (!loadShaderModule(spirvCode, _VulkanParameters._Device, &computeDrawShader)){
+	if (!loadShaderModule(spirvCode, vulkanParameters._Device, &computeDrawShader)){
 		fprintf(stderr, "Error when building the compute shader!\n");
         exit(EXIT_FAILURE);
 	}
@@ -128,21 +127,90 @@ void Application::initGradientPipelines(){
 	VkComputePipelineCreateInfo computePipelineCreateInfo{};
 	computePipelineCreateInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
 	computePipelineCreateInfo.pNext = nullptr;
-	computePipelineCreateInfo.layout = _GradientPipelineLayout;
+	computePipelineCreateInfo.layout = _PipelineLayout;
 	computePipelineCreateInfo.stage = stageinfo;
 	
-	result = vkCreateComputePipelines(_VulkanParameters._Device,VK_NULL_HANDLE,1,&computePipelineCreateInfo, nullptr, &_GradientPipeline);
+	result = vkCreateComputePipelines(vulkanParameters._Device,VK_NULL_HANDLE,1,&computePipelineCreateInfo, nullptr, &_Pipeline);
     if(result != VK_SUCCESS){
         fprintf(stderr, "Failed to create the compute shader pipelines!\n");
         exit(EXIT_FAILURE);
     }
 
-    vkDestroyShaderModule(_VulkanParameters._Device, computeDrawShader, nullptr);
+    vkDestroyShaderModule(vulkanParameters._Device, computeDrawShader, nullptr);
 }
 
-void Application::destroyGradientPipelines(){
-    vkDestroyPipelineLayout(_VulkanParameters._Device, _GradientPipelineLayout, nullptr);
-    vkDestroyPipeline(_VulkanParameters._Device, _GradientPipeline, nullptr);
+void GradientPipeline::destroy(const VulkanAppParameters& vulkanParameters){
+    vkDestroyPipelineLayout(vulkanParameters._Device, _PipelineLayout, nullptr);
+    vkDestroyPipeline(vulkanParameters._Device, _Pipeline, nullptr);
+}
+
+void GradientPipeline::run(const VulkanAppParameters& vulkanParameters, const VkCommandBuffer& cmd){
+    // bind the gradient drawing compute pipeline
+    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, getPipeline());
+
+    // bind the descriptor set containing the draw image for the compute pipeline
+    auto descriptorLayouts = getDescriptorLayouts();
+    auto descriptorSets = getDescriptors();
+    vkCmdBindDescriptorSets(
+        cmd, 
+        VK_PIPELINE_BIND_POINT_COMPUTE, 
+        getPipelineLayout(), 
+        0, 
+        descriptorSets.size(), 
+        descriptorSets.data(), 
+        0, 
+        nullptr
+    );
+
+    // execute the compute pipeline dispatch. We are using 16x16 workgroup size so we need to divide by it
+    vkCmdDispatch(
+        cmd, 
+        std::ceil(vulkanParameters._DrawExtent.width / 16.0), 
+        std::ceil(vulkanParameters._DrawExtent.height / 16.0), 
+        1
+    );
+}
+
+void GradientPipeline::initDescriptors(const VulkanAppParameters& vulkanParameters, const AllocatedImage& image, DescriptorAllocator& descriptorAllocator){
+	//create a descriptor pool that will hold 10 sets with 1 image each
+	std::vector<DescriptorAllocator::PoolSizeRatio> sizes ={
+		{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1 }
+	};
+
+	descriptorAllocator.initPool(vulkanParameters._Device, 10, sizes);
+
+	//make the descriptor set layout for our compute draw
+	{
+		DescriptorLayoutBuilder builder;
+		builder.addBinding(0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);
+		_DescriptorLayouts.push_back(builder.build(vulkanParameters._Device, VK_SHADER_STAGE_COMPUTE_BIT));
+	}
+
+    //allocate a descriptor set for our draw image
+	_Descriptors.push_back(descriptorAllocator.allocate(vulkanParameters._Device, _DescriptorLayouts[0]));	
+
+	VkDescriptorImageInfo imgInfo{};
+	imgInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+	imgInfo.imageView = image._ImageView;
+	
+	VkWriteDescriptorSet drawImageWrite = {};
+	drawImageWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	drawImageWrite.pNext = nullptr;
+	
+	drawImageWrite.dstBinding = 0;
+	drawImageWrite.dstSet = *_Descriptors.data();
+	drawImageWrite.descriptorCount = _Descriptors.size();
+	drawImageWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+	drawImageWrite.pImageInfo = &imgInfo;
+
+	vkUpdateDescriptorSets(vulkanParameters._Device, 1, &drawImageWrite, 0, nullptr);
+}
+
+void GradientPipeline::destroyDescriptors(const VulkanAppParameters& vulkanParameters, DescriptorAllocator& descriptorAllocator){
+    descriptorAllocator.destroyPool(vulkanParameters._Device);
+    for(auto descriptorLayout : _DescriptorLayouts){
+        vkDestroyDescriptorSetLayout(vulkanParameters._Device, descriptorLayout, nullptr);
+    }
 }
 
 }
