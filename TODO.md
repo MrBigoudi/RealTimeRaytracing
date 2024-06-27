@@ -1,9 +1,5 @@
 # Todo list
 
-- move to vulkan
-- use slang shading language
-- break vulkanInit.cpp into multiple cpp files
-
 - add debug time graphs
 
 compute the time for each segment in the algorithm

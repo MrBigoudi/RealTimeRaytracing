@@ -148,8 +148,6 @@ class Application {
         void resetCommandBuffer(VkCommandBuffer commandBuffer);
         void endCommandBuffer(VkCommandBuffer commandBuffer);
         void beginCommandBuffer(VkCommandBuffer commandBuffer, VkCommandBufferBeginInfo commandBufferBeginInfo);
-        static void transitionImage(VkCommandBuffer cmd, VkImage image, VkImageLayout currentLayout, VkImageLayout newLayout);
-        static VkImageSubresourceRange imageSubresourceRange(VkImageAspectFlags aspectMask);
         VkSubmitInfo2 submitInfo(VkCommandBufferSubmitInfo* cmd, VkSemaphoreSubmitInfo* signalSemaphoreInfo, VkSemaphoreSubmitInfo* waitSemaphoreInfo);
 	    void queueSubmit2(VkSubmitInfo2* submit);
         VkPresentInfoKHR getPresentInfo(uint32_t* swapchainImageIndex);
@@ -166,10 +164,13 @@ class Application {
         VkImageViewCreateInfo imageviewCreateInfo(VkFormat format, VkImage image, VkImageAspectFlags aspectFlags);
         void createImage(VkImageCreateInfo* rimg_info, VmaAllocationCreateInfo* rimg_allocinfo);
         void createImageView(VkImageViewCreateInfo* rview_info);
-        static void copyImageToImage(VkCommandBuffer cmd, VkImage source, VkImage destination, VkExtent2D srcSize, VkExtent2D dstSize);
-        static bool loadShaderModule(Slang::ComPtr<slang::IBlob> spirvCode, VkDevice device, VkShaderModule* outShaderModule);
         void initBackgroundPipelines();
         void destroyBackgroundPipelines();
+
+        static void transitionImage(VkCommandBuffer cmd, VkImage image, VkImageLayout currentLayout, VkImageLayout newLayout);
+        static VkImageSubresourceRange imageSubresourceRange(VkImageAspectFlags aspectMask);
+        static void copyImageToImage(VkCommandBuffer cmd, VkImage source, VkImage destination, VkExtent2D srcSize, VkExtent2D dstSize);
+        static bool loadShaderModule(Slang::ComPtr<slang::IBlob> spirvCode, VkDevice device, VkShaderModule* outShaderModule);
 
 
     // init stuff

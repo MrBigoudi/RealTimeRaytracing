@@ -2,10 +2,10 @@
 add_library(commonVulkan)
 
 add_subdirectory(dep)
+add_subdirectory(vulkan)
 
 set(SOURCE_FILES 
     glfwInit.cpp
-    vulkanInit.cpp
     application.cpp
 )
 
