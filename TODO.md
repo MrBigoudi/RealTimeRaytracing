@@ -1,5 +1,7 @@
 # Todo list
 
+- add library for common codes (outside graphics api)
+
 - add debug time graphs
 
 compute the time for each segment in the algorithm
