@@ -5,15 +5,7 @@
 
 namespace vkr {
 
-void Application::initPipelines(){
-    initBackgroundPipelines();
-}
-
-void Application::destroyPipelines(){
-    destroyBackgroundPipelines();
-}
-
-void Application::initBackgroundPipelines(){
+void Application::initGradientPipelines(){
     const std::string COMPILED_SHADER_DIRECTORY = std::string(PROJECT_SOURCE_DIR) + "/shaders/compiled/";
     // Once the slang session has been obtained, we can start loading code into it.
     //
@@ -113,7 +105,7 @@ void Application::initBackgroundPipelines(){
 	computeLayout.pSetLayouts = &_DrawImageDescriptorLayout;
 	computeLayout.setLayoutCount = 1;
 
-	VkResult result = vkCreatePipelineLayout(_VulkanParameters._Device, &computeLayout, nullptr, &_gradientPipelineLayout);
+	VkResult result = vkCreatePipelineLayout(_VulkanParameters._Device, &computeLayout, nullptr, &_GradientPipelineLayout);
     if(result != VK_SUCCESS){
         fprintf(stderr, "Failed to init the backgroud pipelines layouts!\n");
         exit(EXIT_FAILURE);
@@ -136,10 +128,10 @@ void Application::initBackgroundPipelines(){
 	VkComputePipelineCreateInfo computePipelineCreateInfo{};
 	computePipelineCreateInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
 	computePipelineCreateInfo.pNext = nullptr;
-	computePipelineCreateInfo.layout = _gradientPipelineLayout;
+	computePipelineCreateInfo.layout = _GradientPipelineLayout;
 	computePipelineCreateInfo.stage = stageinfo;
 	
-	result = vkCreateComputePipelines(_VulkanParameters._Device,VK_NULL_HANDLE,1,&computePipelineCreateInfo, nullptr, &_gradientPipeline);
+	result = vkCreateComputePipelines(_VulkanParameters._Device,VK_NULL_HANDLE,1,&computePipelineCreateInfo, nullptr, &_GradientPipeline);
     if(result != VK_SUCCESS){
         fprintf(stderr, "Failed to create the compute shader pipelines!\n");
         exit(EXIT_FAILURE);
@@ -148,30 +140,9 @@ void Application::initBackgroundPipelines(){
     vkDestroyShaderModule(_VulkanParameters._Device, computeDrawShader, nullptr);
 }
 
-void Application::destroyBackgroundPipelines(){
-    vkDestroyPipelineLayout(_VulkanParameters._Device, _gradientPipelineLayout, nullptr);
-    vkDestroyPipeline(_VulkanParameters._Device, _gradientPipeline, nullptr);
-}
-
-bool Application::loadShaderModule(Slang::ComPtr<slang::IBlob> spirvCode, VkDevice device, VkShaderModule* outShaderModule){
-
-    // create a new shader module, using the buffer we loaded
-    VkShaderModuleCreateInfo createInfo = {};
-    createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    createInfo.pNext = nullptr;
-
-    // codeSize has to be in bytes, so multply the ints in the buffer by size of
-    // int to know the real size of the buffer
-    createInfo.codeSize = spirvCode->getBufferSize();
-    createInfo.pCode = static_cast<const uint32_t*>(spirvCode->getBufferPointer());
-
-    // check that the creation goes well.
-    VkShaderModule shaderModule;
-    if (vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
-        return false;
-    }
-    *outShaderModule = shaderModule;
-    return true;
+void Application::destroyGradientPipelines(){
+    vkDestroyPipelineLayout(_VulkanParameters._Device, _GradientPipelineLayout, nullptr);
+    vkDestroyPipeline(_VulkanParameters._Device, _GradientPipeline, nullptr);
 }
 
 }

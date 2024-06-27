@@ -32,10 +32,10 @@ void Application::drawBackground(VkCommandBuffer cmd){
 	vkCmdClearColorImage(cmd, _DrawImage._Image, VK_IMAGE_LAYOUT_GENERAL, &clearValue, 1, &clearRange);
 
     // bind the gradient drawing compute pipeline
-	vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, _gradientPipeline);
+	vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, _GradientPipeline);
 
 	// bind the descriptor set containing the draw image for the compute pipeline
-	vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, _gradientPipelineLayout, 0, 1, &_DrawImageDescriptors, 0, nullptr);
+	vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, _GradientPipelineLayout, 0, 1, &_DrawImageDescriptors, 0, nullptr);
 
 	// execute the compute pipeline dispatch. We are using 16x16 workgroup size so we need to divide by it
 	vkCmdDispatch(cmd, std::ceil(_VulkanParameters._DrawExtent.width / 16.0), std::ceil(_VulkanParameters._DrawExtent.height / 16.0), 1);

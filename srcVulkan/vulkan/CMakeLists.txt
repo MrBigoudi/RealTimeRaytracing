@@ -9,7 +9,6 @@ set(VULKAN_SOURCE_FILES
     vkInstance.cpp
     vkMemoryAllocator.cpp
     vkPhysicalDevice.cpp
-    vkPipelines.cpp
     vkSlang.cpp
     vkSurface.cpp
     vkSwapChain.cpp

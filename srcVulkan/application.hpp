@@ -101,8 +101,8 @@ class Application {
         FrameData _Frames[FRAME_OVERLAP];
         uint32_t _FrameNumber = 0;
 
-        VkPipeline _gradientPipeline{};
-        VkPipelineLayout _gradientPipelineLayout{};
+        VkPipeline _GradientPipeline{};
+        VkPipelineLayout _GradientPipelineLayout{};
 
         SlangParameters _Slang{};
 
@@ -136,8 +136,6 @@ class Application {
         void destroyDescriptors();
         void initSlang();
         void destroySlang();
-        void initPipelines();
-        void destroyPipelines();
 
     // vulkan helpers
     private:
@@ -164,9 +162,7 @@ class Application {
         VkImageViewCreateInfo imageviewCreateInfo(VkFormat format, VkImage image, VkImageAspectFlags aspectFlags);
         void createImage(VkImageCreateInfo* rimg_info, VmaAllocationCreateInfo* rimg_allocinfo);
         void createImageView(VkImageViewCreateInfo* rview_info);
-        void initBackgroundPipelines();
-        void destroyBackgroundPipelines();
-
+        
         static void transitionImage(VkCommandBuffer cmd, VkImage image, VkImageLayout currentLayout, VkImageLayout newLayout);
         static VkImageSubresourceRange imageSubresourceRange(VkImageAspectFlags aspectMask);
         static void copyImageToImage(VkCommandBuffer cmd, VkImage source, VkImage destination, VkExtent2D srcSize, VkExtent2D dstSize);
@@ -181,6 +177,13 @@ class Application {
         void initWindow();
         void destroyGLFW();
         void destroyWindow();
+
+    // pipelines
+    private:
+        void initPipelines();
+        void destroyPipelines();
+        void initGradientPipelines();
+        void destroyGradientPipelines();
     
     // main functions
     private:

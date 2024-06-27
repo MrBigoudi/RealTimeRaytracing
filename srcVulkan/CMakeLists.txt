@@ -3,6 +3,7 @@ add_library(commonVulkan)
 
 add_subdirectory(dep)
 add_subdirectory(vulkan)
+add_subdirectory(pipelines)
 
 set(SOURCE_FILES 
     glfwInit.cpp
