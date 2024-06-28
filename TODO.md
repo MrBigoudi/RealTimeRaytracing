@@ -1,5 +1,7 @@
 # Todo list
 
+- port what is already done to vulkan
+
 - add debug time graphs
 
 compute the time for each segment in the algorithm
