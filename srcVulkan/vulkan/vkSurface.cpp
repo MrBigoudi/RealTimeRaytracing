@@ -2,18 +2,17 @@
 #include <GLFW/glfw3.h>
 
 #include "application.hpp"
+#include "errorHandler.hpp"
 
 namespace vkr{
 
 void Application::initSurface(){
-    VkResult err = glfwCreateWindowSurface(_VulkanParameters._Instance, _Window, NULL, &_VulkanParameters._Surface);
-    if (err != VK_SUCCESS) { 
-        fprintf(
-            stderr,
-            "Failed to create the surface!\n"
-        );
-        exit(EXIT_FAILURE);
-    }
+    VkResult result = glfwCreateWindowSurface(_VulkanParameters._Instance, _Window, NULL, &_VulkanParameters._Surface);
+    cr::ErrorHandler::vulkanError(
+        result == VK_SUCCESS,
+        __FILE__, __LINE__,
+        "Failed to create the surface!\n"
+    ); 
 }
 
 void Application::destroySurface(){

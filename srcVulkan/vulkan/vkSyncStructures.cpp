@@ -1,5 +1,7 @@
 #include "application.hpp"
 
+#include "errorHandler.hpp"
+
 namespace vkr{
 
 void Application::initSyncStructures(){
@@ -17,10 +19,11 @@ void Application::initSyncStructures(){
             nullptr, 
             &_Frames[i]._RenderFence
         );
-        if(result != VK_SUCCESS){
-            fprintf(stderr, "Failed to create the fence!\n");
-            exit(EXIT_FAILURE);
-        }
+        cr::ErrorHandler::vulkanError(
+            result == VK_SUCCESS,
+            __FILE__, __LINE__,
+            "Failed to create the fence!\n"
+        ); 
 
 		result = vkCreateSemaphore(
             _VulkanParameters._Device, 
@@ -28,10 +31,11 @@ void Application::initSyncStructures(){
             nullptr, 
             &_Frames[i]._SwapchainSemaphore
         );
-        if(result != VK_SUCCESS){
-            fprintf(stderr, "Failed to create the swapchain semaphore!\n");
-            exit(EXIT_FAILURE);
-        }
+        cr::ErrorHandler::vulkanError(
+            result == VK_SUCCESS,
+            __FILE__, __LINE__,
+            "Failed to create the swapchain semaphore!\n"
+        ); 
 
         result = vkCreateSemaphore(
             _VulkanParameters._Device, 
@@ -39,10 +43,11 @@ void Application::initSyncStructures(){
             nullptr, 
             &_Frames[i]._RenderSemaphore
         );
-        if(result != VK_SUCCESS){
-            fprintf(stderr, "Failed to create the render semaphore!\n");
-            exit(EXIT_FAILURE);
-        }        
+        cr::ErrorHandler::vulkanError(
+            result == VK_SUCCESS,
+            __FILE__, __LINE__,
+            "Failed to create the render semaphore!\n"
+        );       
 	}
 }
 

@@ -8,14 +8,14 @@ set(CORE_HEADER_FILES
     input.hpp
 )
 
-target_sources(commonOpenGL 
+target_sources(common
     PUBLIC 
         ${CORE_HEADER_FILES}
     PRIVATE
         ${CORE_SOURCE_FILES}
 )
 
-target_include_directories(commonOpenGL 
+target_include_directories(common 
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
         $<INSTALL_INTERFACE:include>

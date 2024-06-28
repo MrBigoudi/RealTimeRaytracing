@@ -4,7 +4,7 @@
 #include <glm/ext.hpp>
 #include "errorHandler.hpp"
 
-namespace glr{
+namespace cr{
 
 uint32_t Mesh::_IdGenerator = 0;
 

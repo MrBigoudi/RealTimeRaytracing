@@ -1,8 +1,6 @@
 #include "input.hpp"
 
-#include "application.hpp"
-
-namespace glr{
+namespace cr{
 
 MouseParamters Input::_Mouse = {
     ._Mode = MOUSE_MODE_CAMERA,
@@ -11,7 +9,7 @@ MouseParamters Input::_Mouse = {
     ._LastY = 0.,
 };
 
-void Input::mouseCallback(GLFWwindow* window, double xpos, double ypos) {
+void Input::mouseInput(GLFWwindow* window, CameraPtr camera, double xpos, double ypos) {
 
     if (_Mouse._NeedsToBeInit) {
         _Mouse._LastX = xpos;
@@ -25,10 +23,8 @@ void Input::mouseCallback(GLFWwindow* window, double xpos, double ypos) {
     _Mouse._LastX = xpos;
     _Mouse._LastY = ypos;
 
-    Application* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
-    assert(app);
     if(_Mouse._Mode != MOUSE_MODE_CAMERA) return;
-    app->getCamera()->ProcessMouseMovement(static_cast<float>(xoffset), static_cast<float>(yoffset));
+    camera->ProcessMouseMovement(static_cast<float>(xoffset), static_cast<float>(yoffset));
 }
 
 

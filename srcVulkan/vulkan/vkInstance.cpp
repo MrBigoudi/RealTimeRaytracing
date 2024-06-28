@@ -1,5 +1,7 @@
 #include "application.hpp"
 
+#include "errorHandler.hpp"
+
 namespace vkr{
 
 void Application::initInstance(){
@@ -13,18 +15,18 @@ void Application::initInstance(){
 
     // configure extensions
     auto system_info_ret = vkb::SystemInfo::get_system_info();
-    if (!system_info_ret) {
-        fprintf(stderr, 
-            "Failed to get the system info: %s\n", 
-            system_info_ret.error().message().c_str()
-        );
-        exit(EXIT_FAILURE);
+    if(!system_info_ret){
+        cr::ErrorHandler::handle(
+            __FILE__, __LINE__,
+            cr::ErrorCode::VULKAN_ERROR,
+            "Failed to get the system info: " + system_info_ret.error().message() + "\n"
+        );   
     }
     auto system_info = system_info_ret.value();
-    if (system_info.is_layer_available("VK_LAYER_LUNARG_api_dump")) {
+    if(system_info.is_layer_available("VK_LAYER_LUNARG_api_dump")) {
         instance_builder.enable_layer("VK_LAYER_LUNARG_api_dump");
     }
-    if (system_info.validation_layers_available){
+    if(system_info.validation_layers_available){
         instance_builder.enable_validation_layers();
     }
 
@@ -32,13 +34,13 @@ void Application::initInstance(){
     auto instance_builder_return = instance_builder.build();
 
     // check errors
-    if (!instance_builder_return){
-        fprintf(
-            stderr, 
-            "Failed to create Vulkan Instance: %s\n",
-            instance_builder_return.error().message().c_str()
+    if(!instance_builder_return){
+        cr::ErrorHandler::handle(
+            __FILE__, __LINE__,
+            cr::ErrorCode::VULKAN_ERROR,
+            "Failed to create Vulkan Instance: " + instance_builder_return.error().message() + "\n"
         );
-    } 
+    }
     // get the instance
     _VulkanParameters._Instance = instance_builder_return.value();
 }

@@ -24,15 +24,20 @@ target_include_directories(commonOpenGL
 )
 
 add_subdirectory(dep)
-add_subdirectory(core)
 add_subdirectory(scene)
 add_subdirectory(shaders)
+
+# Link library
+target_link_libraries(commonOpenGL PRIVATE 
+    common
+)
 
 # Add executable
 add_executable(appVersionOpenGL main.cpp)
 
 # Link dependencies
 target_link_libraries(appVersionOpenGL PRIVATE 
+    common
     commonOpenGL
     glfw 
     OpenGL

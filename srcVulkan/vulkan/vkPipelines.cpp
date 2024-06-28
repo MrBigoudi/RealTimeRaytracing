@@ -14,6 +14,7 @@ void Application::initPipelines(){
 void Application::destroyPipelines(){
     for(auto pipeline : _Slang._Pipelines){
         pipeline->destroy(_VulkanParameters);
+        pipeline->destroyDescriptors(_VulkanParameters, _GlobalDescriptorAllocator);
     }
 }
 

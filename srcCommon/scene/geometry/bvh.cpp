@@ -6,7 +6,7 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/string_cast.hpp>
 
-namespace glr{
+namespace cr{
 
 BVH::BVH(uint32_t nbTriangles,
     const std::vector<TriangleGPU>& unsortedTriangles,
@@ -303,7 +303,7 @@ AABB_GPU BVH::getCircumscribedCube(const AABB_GPU& sceneAABB) const {
 }
 
 std::vector<glm::vec3> BVH::getTrianglesCentroids() const{
-    std::vector<glm::vec3> centroids = std::vector<glm::vec3>(MAX_NB_TRIANGLES, glm::vec3(0.f));
+    std::vector<glm::vec3> centroids = std::vector<glm::vec3>(Triangle::MAX_NB_TRIANGLES, glm::vec3(0.f));
     for(size_t i=0; i<_InternalStruct._NbTriangles; i++){
         TriangleGPU triangle = _InternalStruct._UnsortedTriangles[i];
         centroids[i] = Triangle::getCentroid(triangle, _InternalStruct._MeshesInTheScene[triangle._ModelId]._ModelMatrix);
@@ -314,7 +314,7 @@ std::vector<glm::vec3> BVH::getTrianglesCentroids() const{
 std::vector<glm::vec3> BVH::getNormalizedCentroids(
             const std::vector<glm::vec3>& centroids,
             const AABB_GPU& circumscribedCube) const {
-    std::vector<glm::vec3> normalizedCentroids = std::vector<glm::vec3>(MAX_NB_TRIANGLES, glm::vec3(0.f));
+    std::vector<glm::vec3> normalizedCentroids = std::vector<glm::vec3>(Triangle::MAX_NB_TRIANGLES, glm::vec3(0.f));
     for(size_t i=0; i<_InternalStruct._NbTriangles; i++){
         float lengthX = (circumscribedCube._Max.x - circumscribedCube._Min.x);
         float lengthY = (circumscribedCube._Max.y - circumscribedCube._Min.y);
@@ -338,7 +338,7 @@ std::vector<uint32_t> BVH::getMortonCodes() const {
     // normalize the centroids
     std::vector<glm::vec3> trianglesNormalizedCentroids = getNormalizedCentroids(trianglesCentroids, circumscribedCube);
     // compute the morton codes
-    std::vector<uint32_t> mortonCodes = std::vector<uint32_t>(MAX_NB_TRIANGLES, 0);
+    std::vector<uint32_t> mortonCodes = std::vector<uint32_t>(Triangle::MAX_NB_TRIANGLES, 0);
     for(size_t i=0; i<_InternalStruct._NbTriangles; i++){
         glm::vec3 centroid = trianglesNormalizedCentroids[i];
         uint32_t code = morton3D(centroid);
@@ -422,13 +422,13 @@ BVH_NodeGPU BVH::mergeBVH_Nodes(const BVH_NodeGPU& node1, const BVH_NodeGPU& nod
 
 void BVH_Params::printParent() const {
     fprintf(stdout, "Parent Array:\n[ ");
-    for(size_t i = 0; i < (2 * MAX_NB_TRIANGLES) - 1; i++) {
+    for(size_t i = 0; i < (2 * Triangle::MAX_NB_TRIANGLES) - 1; i++) {
         if(_Parent[i].has_value()){
             fprintf(stdout, "%u", _Parent[i].value());
         } else {
             fprintf(stdout, "null");
         }
-        if (i < (2 * MAX_NB_TRIANGLES) - 2) {
+        if (i < (2 * Triangle::MAX_NB_TRIANGLES) - 2) {
             fprintf(stdout, ", ");
         }
     }
@@ -437,13 +437,13 @@ void BVH_Params::printParent() const {
 
 void BVH_Params::printLeftChild() const {
     fprintf(stdout, "LeftChild Array:\n[ ");
-    for(size_t i = 0; i < (2 * MAX_NB_TRIANGLES) - 1; i++) {
+    for(size_t i = 0; i < (2 * Triangle::MAX_NB_TRIANGLES) - 1; i++) {
         if(_LeftChild[i].has_value()){
             fprintf(stdout, "%u", _LeftChild[i].value());
         } else {
             fprintf(stdout, "null");
         }
-        if (i < (2 * MAX_NB_TRIANGLES) - 2) {
+        if (i < (2 * Triangle::MAX_NB_TRIANGLES) - 2) {
             fprintf(stdout, ", ");
         }
     }
@@ -452,13 +452,13 @@ void BVH_Params::printLeftChild() const {
 
 void BVH_Params::printRightChild() const {
     fprintf(stdout, "RightChild Array:\n[ ");
-    for(size_t i = 0; i < (2 * MAX_NB_TRIANGLES) - 1; i++) {
+    for(size_t i = 0; i < (2 * Triangle::MAX_NB_TRIANGLES) - 1; i++) {
         if(_RightChild[i].has_value()){
             fprintf(stdout, "%u", _RightChild[i].value());
         } else {
             fprintf(stdout, "null");
         }
-        if (i < (2 * MAX_NB_TRIANGLES) - 2) {
+        if (i < (2 * Triangle::MAX_NB_TRIANGLES) - 2) {
             fprintf(stdout, ", ");
         }
     }
@@ -467,13 +467,13 @@ void BVH_Params::printRightChild() const {
 
 void BVH_Params::printIsLeaf() const {
     fprintf(stdout, "IsLeaf Array:\n[ ");
-    for(size_t i = 0; i < (2 * MAX_NB_TRIANGLES) - 1; i++) {
+    for(size_t i = 0; i < (2 * Triangle::MAX_NB_TRIANGLES) - 1; i++) {
         if(_IsLeaf[i].has_value()){
             fprintf(stdout, "%s", _IsLeaf[i].value() ? "true" : "false");
         } else {
             fprintf(stdout, "null");
         }
-        if (i < (2 * MAX_NB_TRIANGLES) - 2) {
+        if (i < (2 * Triangle::MAX_NB_TRIANGLES) - 2) {
             fprintf(stdout, ", ");
         }
     }
@@ -482,7 +482,7 @@ void BVH_Params::printIsLeaf() const {
 
 void BVH_Params::printClusters() const {
     fprintf(stdout, "Clusters Array:\n[\n ");
-    for(size_t i = 0; i < (2 * MAX_NB_TRIANGLES) - 1; i++) {
+    for(size_t i = 0; i < (2 * Triangle::MAX_NB_TRIANGLES) - 1; i++) {
         if(!_Clusters[i].has_value()){
             fprintf(stdout, "null");
         } else {
@@ -496,7 +496,7 @@ void BVH_Params::printClusters() const {
                 glm::to_string(_Clusters[i]->_BoundingBox._Max).c_str()
             );
         }
-        if (i < (2 * MAX_NB_TRIANGLES) - 2) {
+        if (i < (2 * Triangle::MAX_NB_TRIANGLES) - 2) {
             fprintf(stdout, ",\n ");
         }
     }
@@ -505,9 +505,9 @@ void BVH_Params::printClusters() const {
 
 void BVH_Params::printTriangleIndices() const {
     fprintf(stdout, "Triangle indices Array:\n[ ");
-    for(size_t i = 0; i < MAX_NB_TRIANGLES; i++) {
+    for(size_t i = 0; i < Triangle::MAX_NB_TRIANGLES; i++) {
         fprintf(stdout, "%u", _TriangleIndices[i]);
-        if (i < (MAX_NB_TRIANGLES) - 1) {
+        if (i < (Triangle::MAX_NB_TRIANGLES) - 1) {
             fprintf(stdout, ", ");
         }
     }

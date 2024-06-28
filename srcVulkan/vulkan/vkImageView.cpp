@@ -1,5 +1,7 @@
 #include "application.hpp"
 
+#include "errorHandler.hpp"
+
 namespace vkr{
 
 VkImageCreateInfo Application::imageCreateInfo(VkFormat format, VkImageUsageFlags usageFlags, VkExtent3D extent){
@@ -45,10 +47,11 @@ VkImageViewCreateInfo Application::imageviewCreateInfo(VkFormat format, VkImage 
 
 void Application::createImage(VkImageCreateInfo* rimg_info, VmaAllocationCreateInfo* rimg_allocinfo){
 	VkResult result = vmaCreateImage(_VulkanParameters._Allocator, rimg_info, rimg_allocinfo, &_DrawImage._Image, &_DrawImage._Allocation, nullptr);
-    if(result != VK_SUCCESS){
-        fprintf(stderr, "Failed to create an image!\n");
-        exit(EXIT_FAILURE);
-    }    
+    cr::ErrorHandler::vulkanError(
+        result == VK_SUCCESS,
+        __FILE__, __LINE__,
+        "Failed to create an image!\n"
+    );  
 }
 
 void Application::createImageView(VkImageViewCreateInfo* rview_info){

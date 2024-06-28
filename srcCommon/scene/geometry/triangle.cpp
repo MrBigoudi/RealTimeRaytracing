@@ -2,7 +2,7 @@
 
 #include <cstdlib>
 
-namespace glr{
+namespace cr{
 
 uint32_t Triangle::_IdGenerator = 0;
 

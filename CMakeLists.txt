@@ -46,6 +46,7 @@ find_package(OpenMP REQUIRED)
 find_package(tinyobjloader REQUIRED)
 
 # Add subdirectories
+add_subdirectory(srcCommon)
 add_subdirectory(srcOpenGL)
 add_subdirectory(srcVulkan)
 add_subdirectory(tests)

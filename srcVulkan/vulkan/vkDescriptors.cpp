@@ -1,13 +1,16 @@
 #include "application.hpp"
 
+#include "errorHandler.hpp"
+
 namespace vkr {
 
 void DescriptorAllocator::clearDescriptors(VkDevice device){
     VkResult result = vkResetDescriptorPool(device, _Pool, 0);
-    if(result != VK_SUCCESS){
-        fprintf(stderr, "Failed to reset the pool!\n");
-        exit(EXIT_FAILURE);
-    }
+    cr::ErrorHandler::vulkanError(
+        result == VK_SUCCESS,
+        __FILE__, __LINE__,
+        "Failed to reset the pool!\n"
+    );
 }
 
 void DescriptorLayoutBuilder::addBinding(uint32_t binding, VkDescriptorType type){
@@ -37,10 +40,11 @@ VkDescriptorSetLayout DescriptorLayoutBuilder::build(VkDevice device, VkShaderSt
 
     VkDescriptorSetLayout set;
     VkResult result = vkCreateDescriptorSetLayout(device, &info, nullptr, &set);
-    if(result != VK_SUCCESS){
-        fprintf(stderr, "Failed to create the descriptor set layout!\n");
-        exit(EXIT_FAILURE);
-    }
+    cr::ErrorHandler::vulkanError(
+        result == VK_SUCCESS,
+        __FILE__, __LINE__,
+        "Failed to create the descriptor set layout!\n"
+    );
 
     return set;
 }
@@ -61,10 +65,11 @@ void DescriptorAllocator::initPool(VkDevice device, uint32_t maxSets, std::span<
 	pool_info.pPoolSizes = poolSizes.data();
 
 	VkResult result = vkCreateDescriptorPool(device, &pool_info, nullptr, &_Pool);
-    if(result != VK_SUCCESS){
-        fprintf(stderr, "Failed to allocate the descriptor pool!\n");
-        exit(EXIT_FAILURE);
-    }
+    cr::ErrorHandler::vulkanError(
+        result == VK_SUCCESS,
+        __FILE__, __LINE__,
+        "Failed to allocate the descriptor pool!\n"
+    );
 }
 
 void DescriptorAllocator::destroyPool(VkDevice device){
@@ -81,10 +86,11 @@ VkDescriptorSet DescriptorAllocator::allocate(VkDevice device, VkDescriptorSetLa
 
     VkDescriptorSet ds;
     VkResult result = vkAllocateDescriptorSets(device, &allocInfo, &ds);
-    if(result != VK_SUCCESS){
-        fprintf(stderr, "Failed to allocate the descriptor sets!\n");
-        exit(EXIT_FAILURE);
-    }
+    cr::ErrorHandler::vulkanError(
+        result == VK_SUCCESS,
+        __FILE__, __LINE__,
+        "Failed to allocate the descriptor sets!\n"
+    );
 
     return ds;
 }

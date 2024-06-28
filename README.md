@@ -23,5 +23,6 @@ Then launch the project
 
 You can also run tests with
 ```sh
+./run_tests.sh --help
 ./run_tests.sh
 ```

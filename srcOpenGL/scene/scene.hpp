@@ -4,10 +4,12 @@
 #include <array>
 
 #include "program.hpp"
+
 #include "triangle.hpp"
 #include "material.hpp"
 #include "mesh.hpp"
 #include "bvh.hpp"
+
 #include <glad/gl.h>
 
 #include <memory>
@@ -19,8 +21,8 @@ using ScenePtr = std::shared_ptr<Scene>;
 
 class Scene{
     private:
-        std::vector<Material> _Materials = {Material()}; // always one default material
-        std::vector<MeshPtr> _Meshes = {};
+        std::vector<cr::Material> _Materials = {cr::Material()}; // always one default material
+        std::vector<cr::MeshPtr> _Meshes = {};
 
         uint32_t _MaterialIdGenerator = 0;
         
@@ -34,18 +36,18 @@ class Scene{
         uint32_t _NbMeshes = 0;
 
         // tmp
-        BVH_Ptr _BVH = nullptr;
+        cr::BVH_Ptr _BVH = nullptr;
 
     public:
         Scene();
 
     public:
-        std::vector<TriangleGPU> getTriangleToGPUData() const;
-        std::vector<MaterialGPU> getMaterialToGPUData() const;
-        std::vector<MeshModelGPU> getMeshModelToGPUData() const;
-        std::vector<BVH_NodeGPU> getBVH_NodesToGPUData(BVH_Ptr bvh) const;
+        std::vector<cr::TriangleGPU> getTriangleToGPUData() const;
+        std::vector<cr::MaterialGPU> getMaterialToGPUData() const;
+        std::vector<cr::MeshModelGPU> getMeshModelToGPUData() const;
+        std::vector<cr::BVH_NodeGPU> getBVH_NodesToGPUData(cr::BVH_Ptr bvh) const;
 
-        void addMesh(MeshPtr mesh);
+        void addMesh(cr::MeshPtr mesh);
         void addMaterial(const glm::vec4& color);
         void addRandomMaterial();
 
@@ -55,8 +57,8 @@ class Scene{
         void createSSBO();
         void bindSSBO();
 
-        void recursiveTopDownTraversalBVH(std::vector<BVH_NodeGPU>& bvhNodesGPU, BVH_Ptr bvh, uint32_t nodeId) const;
-        void recursiveBottomUpTraversalBVH(std::vector<BVH_NodeGPU>& bvhNodesGPU, BVH_Ptr bvh, uint32_t nodeId) const;
+        void recursiveTopDownTraversalBVH(std::vector<cr::BVH_NodeGPU>& bvhNodesGPU, cr::BVH_Ptr bvh, uint32_t nodeId) const;
+        void recursiveBottomUpTraversalBVH(std::vector<cr::BVH_NodeGPU>& bvhNodesGPU, cr::BVH_Ptr bvh, uint32_t nodeId) const;
 };
 
 }

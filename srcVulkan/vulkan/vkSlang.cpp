@@ -1,14 +1,17 @@
 #include "application.hpp"
 
+#include "errorHandler.hpp"
+
 namespace vkr {
 
 void Application::initSlang(){
     // First we need to create slang global session with work with the Slang API.
     SlangResult result = slang::createGlobalSession(_Slang._GlobalSession.writeRef());
-    if(result != 0){
-        fprintf(stderr, "Failed to create the slang global session!\n");
-        exit(EXIT_FAILURE);
-    }
+    cr::ErrorHandler::vulkanError(
+        result == 0,
+        __FILE__, __LINE__,
+        "Failed to create the slang global session!\n"
+    ); 
 
     // Next we create a compilation session to generate SPIRV code from Slang source.
     slang::SessionDesc sessionDesc = {};
@@ -22,10 +25,11 @@ void Application::initSlang(){
 
     // Create session
     result = _Slang._GlobalSession->createSession(sessionDesc, _Slang._Session.writeRef());
-    if(result != 0){
-        fprintf(stderr, "Failed to create the slang session!\n");
-        exit(EXIT_FAILURE);
-    }
+    cr::ErrorHandler::vulkanError(
+        result == 0,
+        __FILE__, __LINE__,
+        "Failed to create the slang session!\n"
+    ); 
 }
 
 void Application::destroySlang(){}

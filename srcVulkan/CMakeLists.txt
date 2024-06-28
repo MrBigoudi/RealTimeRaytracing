@@ -28,6 +28,11 @@ target_include_directories(commonVulkan
     PRIVATE
 )
 
+# Link library
+target_link_libraries(commonVulkan PRIVATE 
+    common
+)
+
 # Add executable
 add_executable(appVersionVulkan main.cpp)
 
@@ -36,6 +41,7 @@ find_package(VulkanMemoryAllocator CONFIG REQUIRED)
 
 # Link dependencies
 target_link_libraries(appVersionVulkan PRIVATE 
+    common
     commonVulkan
     slang
     vk-bootstrap::vk-bootstrap

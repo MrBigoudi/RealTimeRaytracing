@@ -1,7 +1,7 @@
 #include "errorHandler.hpp"
 #include <GLFW/glfw3.h>
 
-namespace glr{
+namespace cr{
 
 /**
  * Default error handler
@@ -52,6 +52,12 @@ void ErrorHandler::handle(const std::string& fileName, int lineNumber, ErrorCode
 void ErrorHandler::glfwError(const std::string& fileName, int lineNumber, const std::string& msg, ErrorLevel level){
     glfwTerminate();
     handle(fileName, lineNumber, GLFW_ERROR, msg, level);
+}
+
+void ErrorHandler::vulkanError(bool result, const std::string& fileName, int lineNumber, const std::string& msg, ErrorLevel level){
+    if(!result){
+        handle(fileName, lineNumber, VULKAN_ERROR, msg, level);
+    }
 }
 
 }

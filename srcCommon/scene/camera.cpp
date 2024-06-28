@@ -1,7 +1,7 @@
 #include "camera.hpp"
 #include <glm/ext.hpp>
 
-namespace glr{
+namespace cr{
 
 Camera::Camera(
     const glm::vec3& position,
@@ -91,7 +91,7 @@ void Camera::processKeyboard(CameraMovement direction, float deltaTime){
     }
 }
 
-void Camera::ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch){
+void Camera::ProcessMouseMovement(float xoffset, float yoffset, bool constrainPitch){
     xoffset *= _MOUSE_SENSITIVITY;
     yoffset *= _MOUSE_SENSITIVITY;
     _Yaw   += xoffset;

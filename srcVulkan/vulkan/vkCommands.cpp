@@ -1,5 +1,7 @@
 #include "application.hpp"
 
+#include "errorHandler.hpp"
+
 namespace vkr{
 
 void Application::initCommands(){
@@ -16,13 +18,11 @@ void Application::initCommands(){
             nullptr, 
             &_Frames[i]._CommandPool
         );
-        if(result != VK_SUCCESS){
-            fprintf(
-                stderr,
-                "Failed to create the command pools!\n"
-            );
-            exit(EXIT_FAILURE);
-        }
+        cr::ErrorHandler::vulkanError(
+            result == VK_SUCCESS,
+            __FILE__, __LINE__,
+            "Failed to create the command pools!\n"
+        );
 
 		// allocate the default command buffer that we will use for rendering
 		VkCommandBufferAllocateInfo cmdAllocInfo = commandBufferAllocateInfo(
@@ -34,13 +34,11 @@ void Application::initCommands(){
             &cmdAllocInfo, 
             &_Frames[i]._MainCommandBuffer
         );
-        if(result != VK_SUCCESS){
-            fprintf(
-                stderr,
-                "Failed to allocate the command buffers!\n"
-            );
-            exit(EXIT_FAILURE);
-        }
+        cr::ErrorHandler::vulkanError(
+            result == VK_SUCCESS,
+            __FILE__, __LINE__,
+            "Failed to allocate the command buffers!\n"
+        );
 	}
 }
 

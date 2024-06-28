@@ -3,9 +3,7 @@
 #include <cstdint>
 #include <glm/glm.hpp>
 
-namespace glr{
-
-#define MAX_NB_MATERIALS 2<<15
+namespace cr{
 
 
 struct MaterialGPU{
@@ -16,6 +14,9 @@ class Material{
     private:
         static uint32_t _IdGenerator;
         uint32_t _Id = 0;
+
+    public:
+        static const size_t MAX_NB_MATERIALS = 2<<15;
 
     public:
         MaterialGPU _InternalStruct{};

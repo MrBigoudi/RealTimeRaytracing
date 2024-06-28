@@ -3,10 +3,8 @@
 #include <cstdint>
 #include <glm/glm.hpp>
 
-namespace glr{
+namespace cr{
 
-#define MAX_NB_TRIANGLES 2<<15
-// #define MAX_NB_TRIANGLES 2<<3
 
 struct TriangleGPU{
     glm::vec4 _P0;
@@ -18,6 +16,10 @@ struct TriangleGPU{
 class Triangle{
     private:
         static uint32_t _IdGenerator;
+
+    public:
+        static const size_t MAX_NB_TRIANGLES = 2<<15;
+        // static const uint32_t MAX_NB_TRIANGLES = 2<<3;
 
     public:
         TriangleGPU _InternalStruct{};

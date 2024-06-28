@@ -1,5 +1,7 @@
 #include "application.hpp"
 
+#include "errorHandler.hpp"
+
 namespace vkr{
 
 void Application::initPhysicalDevice(){
@@ -11,12 +13,12 @@ void Application::initPhysicalDevice(){
         // Add wanted extensions
         // .add_desired_extension("VK_KHR_imageless_framebuffer")
         .select();
-    if(!physical_device_selector_return) {
-        fprintf(
-            stderr,
+    if(!physical_device_selector_return){
+        cr::ErrorHandler::handle(
+            __FILE__, __LINE__,
+            cr::ErrorCode::VULKAN_ERROR,
             "Couldn't find a physical device!\n"
         );
-        exit(EXIT_FAILURE);
     }
     _VulkanParameters._PhysicalDevice = physical_device_selector_return.value();
 }

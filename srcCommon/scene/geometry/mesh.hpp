@@ -4,12 +4,10 @@
 #include <vector>
 #include <memory>
 
-namespace glr{
+namespace cr{
 
 class Mesh;
 using MeshPtr = std::shared_ptr<Mesh>;
-
-#define MAX_NB_MESHES 2<<5
 
 struct MeshModelGPU {
     glm::mat4 _ModelMatrix = glm::mat4(1);
@@ -25,6 +23,7 @@ class Mesh{
         std::vector<Triangle> _Triangles{};
         MeshModelGPU _InternalStruct;
         static const std::string MODELS_DIRECTORY;
+        static const size_t MAX_NB_MESHES = 2<<5;
 
     public:
         Mesh();

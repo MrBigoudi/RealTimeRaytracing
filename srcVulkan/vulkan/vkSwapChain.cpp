@@ -1,5 +1,7 @@
 #include "application.hpp"
 
+#include "errorHandler.hpp"
+
 namespace vkr{
 
 void Application::initSwapChain(bool recreate){
@@ -29,9 +31,11 @@ void Application::initSwapChain(bool recreate){
 
     // check errors
     if(!swap_ret){
-        fprintf(
-            stderr,
-            "Failed to create a swapchain!\n"
+        cr::ErrorHandler::handle(
+            __FILE__, __LINE__, 
+            cr::ErrorCode::VULKAN_ERROR,
+            "Failed to create a swapchain!\n",
+            cr::ErrorLevel::WARNING
         );
         _VulkanParameters._SwapChain.swapchain = VK_NULL_HANDLE;
     }

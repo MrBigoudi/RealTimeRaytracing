@@ -6,6 +6,7 @@
 #include <string>
 #include <memory>
 #include <glm/glm.hpp>
+
 #include "camera.hpp"
 #include "scene.hpp"
 
@@ -64,7 +65,7 @@ class Application {
         ProgramPtr _ComputeProgram = nullptr;
         GLuint _RectangleVao = 0;
         GLuint _ImageTextureId = 0;
-        CameraPtr _Camera = nullptr;
+        cr::CameraPtr _Camera = nullptr;
         ScenePtr _Scene = nullptr;
 
     private:
@@ -97,11 +98,14 @@ class Application {
         void render();
         void drawImgui();
 
+    private:
+        static void mouseCallback(GLFWwindow* window, double xpos, double ypos);
+
     public:
         Application(ApplicationParameters parameters = {});
         ~Application();
         static Application dummyApplication();
-        CameraPtr getCamera() const;
+        cr::CameraPtr getCamera() const;
 
     public:
         void run();

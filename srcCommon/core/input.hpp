@@ -1,10 +1,11 @@
 #pragma once
 
-#include "camera.hpp"
-#include <glad/gl.h>
 #include <GLFW/glfw3.h>
 
-namespace glr{
+#include "camera.hpp"
+
+
+namespace cr{
 
 enum MouseMode{
     MOUSE_MODE_CAMERA,
@@ -24,7 +25,7 @@ class Input{
         static MouseParamters _Mouse;
 
     public:
-        static void mouseCallback(GLFWwindow* window, double xpos, double ypos);
+        static void mouseInput(GLFWwindow* window, CameraPtr camera, double xpos, double ypos);
         static void cameraInput(GLFWwindow* window, CameraPtr camera, float dt);
 
 };

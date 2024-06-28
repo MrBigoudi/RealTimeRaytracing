@@ -10,7 +10,7 @@
 #include "triangle.hpp"
 #include "mesh.hpp"
 
-namespace glr{
+namespace cr{
 
 class BVH;
 using BVH_Ptr = std::shared_ptr<BVH>;
@@ -43,16 +43,16 @@ struct BVH_NodeGPU {
 
 struct BVH_Params {
     size_t _NbTriangles;
-    std::vector<TriangleGPU> _UnsortedTriangles = std::vector<TriangleGPU>(MAX_NB_TRIANGLES);
-    std::vector<MeshModelGPU> _MeshesInTheScene = std::vector<MeshModelGPU>(MAX_NB_MESHES);
+    std::vector<TriangleGPU> _UnsortedTriangles = std::vector<TriangleGPU>(Triangle::MAX_NB_TRIANGLES);
+    std::vector<MeshModelGPU> _MeshesInTheScene = std::vector<MeshModelGPU>(Mesh::MAX_NB_MESHES);
     
     // bvh structure
-    std::vector<std::optional<BVH_NodeGPU>> _Clusters = std::vector<std::optional<BVH_NodeGPU>>((2*MAX_NB_TRIANGLES)-1, std::nullopt);
-    std::vector<std::optional<bool>> _IsLeaf = std::vector<std::optional<bool>>((2*MAX_NB_TRIANGLES)-1, std::nullopt);
-    std::vector<std::optional<uint32_t>> _Parent = std::vector<std::optional<uint32_t>>((2*MAX_NB_TRIANGLES)-1, std::nullopt);
-    std::vector<std::optional<uint32_t>> _LeftChild = std::vector<std::optional<uint32_t>>((2*MAX_NB_TRIANGLES)-1, std::nullopt);
-    std::vector<std::optional<uint32_t>> _RightChild = std::vector<std::optional<uint32_t>>((2*MAX_NB_TRIANGLES)-1, std::nullopt);
-    std::vector<uint32_t> _TriangleIndices = std::vector<uint32_t>(MAX_NB_TRIANGLES, 0);
+    std::vector<std::optional<BVH_NodeGPU>> _Clusters = std::vector<std::optional<BVH_NodeGPU>>((2*Triangle::MAX_NB_TRIANGLES)-1, std::nullopt);
+    std::vector<std::optional<bool>> _IsLeaf = std::vector<std::optional<bool>>((2*Triangle::MAX_NB_TRIANGLES)-1, std::nullopt);
+    std::vector<std::optional<uint32_t>> _Parent = std::vector<std::optional<uint32_t>>((2*Triangle::MAX_NB_TRIANGLES)-1, std::nullopt);
+    std::vector<std::optional<uint32_t>> _LeftChild = std::vector<std::optional<uint32_t>>((2*Triangle::MAX_NB_TRIANGLES)-1, std::nullopt);
+    std::vector<std::optional<uint32_t>> _RightChild = std::vector<std::optional<uint32_t>>((2*Triangle::MAX_NB_TRIANGLES)-1, std::nullopt);
+    std::vector<uint32_t> _TriangleIndices = std::vector<uint32_t>(Triangle::MAX_NB_TRIANGLES, 0);
 
     void printParent() const;
     void printLeftChild() const;
@@ -67,12 +67,12 @@ struct PlocParams {
     uint32_t _NbTotalClusters = 0;
 
     uint32_t _Iteration = 0;
-    std::vector<uint32_t> _MortonCodes = std::vector<uint32_t>(MAX_NB_TRIANGLES, 0);
+    std::vector<uint32_t> _MortonCodes = std::vector<uint32_t>(Triangle::MAX_NB_TRIANGLES, 0);
 
-    std::vector<std::optional<uint32_t>> _C_In = std::vector<std::optional<uint32_t>>(MAX_NB_TRIANGLES, std::nullopt);
-    std::vector<std::optional<uint32_t>> _C_Out = std::vector<std::optional<uint32_t>>(MAX_NB_TRIANGLES, std::nullopt);
-    std::vector<uint32_t> _NearestNeighborIndices = std::vector<uint32_t>(MAX_NB_TRIANGLES);
-    std::vector<uint32_t> _PrefixScan = std::vector<uint32_t>(MAX_NB_TRIANGLES);
+    std::vector<std::optional<uint32_t>> _C_In = std::vector<std::optional<uint32_t>>(Triangle::MAX_NB_TRIANGLES, std::nullopt);
+    std::vector<std::optional<uint32_t>> _C_Out = std::vector<std::optional<uint32_t>>(Triangle::MAX_NB_TRIANGLES, std::nullopt);
+    std::vector<uint32_t> _NearestNeighborIndices = std::vector<uint32_t>(Triangle::MAX_NB_TRIANGLES);
+    std::vector<uint32_t> _PrefixScan = std::vector<uint32_t>(Triangle::MAX_NB_TRIANGLES);
 
     void printMortonCodes() const;
     void printC_In() const;

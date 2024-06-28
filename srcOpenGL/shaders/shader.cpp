@@ -7,7 +7,7 @@
 
 namespace glr{
 
-const std::string Shader::SHADER_DIRECTORY = std::string(PROJECT_SOURCE_DIR) + "/shaders/";
+const std::string Shader::SHADER_DIRECTORY = std::string(PROJECT_SOURCE_DIR) + "/srcCommon/shaders/";
 
 Shader::~Shader(){
     glDeleteShader(_Id);
@@ -33,10 +33,10 @@ const std::string Shader::readShaderFile() const{
         shaderCode = shaderStream.str();
     }
     catch(std::ifstream::failure &e){
-        ErrorHandler::handle(
+        cr::ErrorHandler::handle(
             __FILE__, 
             __LINE__, 
-            IO_ERROR,
+            cr::ErrorCode::IO_ERROR,
             "Failed to read the file: " + _FilePath + "%s!\n"
         );
     }
@@ -59,10 +59,10 @@ void Shader::compileShader(const std::string& shaderCode){
             _Id = glCreateShader(GL_COMPUTE_SHADER);
             break;
         default:
-            ErrorHandler::handle(
+            cr::ErrorHandler::handle(
                 __FILE__, 
                 __LINE__, 
-                ErrorCode::NOT_IMPLEMENTED_ERROR,
+                cr::ErrorCode::NOT_IMPLEMENTED_ERROR,
                 "Could not compile " + _FilePath + "; this type of shader is not yet implemented!\n"
             );
     }
@@ -75,10 +75,10 @@ void Shader::compileShader(const std::string& shaderCode){
     glGetShaderiv(_Id, GL_COMPILE_STATUS, &success);
     if(!success){
         glGetShaderInfoLog(_Id, 512, NULL, infoLog);
-        ErrorHandler::handle(
+        cr::ErrorHandler::handle(
             __FILE__,
             __LINE__,
-            ErrorCode::OPENGL_ERROR,
+            cr::ErrorCode::OPENGL_ERROR,
             "Failed to compile the shader `" + _FilePath + "': " + infoLog + "!\n"
         );
     };

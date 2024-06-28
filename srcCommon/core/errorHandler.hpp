@@ -2,7 +2,7 @@
 
 #include <string>
 
-namespace glr{
+namespace cr{
 
 /**
  * @enum The level of the error
@@ -20,11 +20,13 @@ enum ErrorCode{
     GLAD_ERROR,
     GLFW_ERROR,
     OPENGL_ERROR,
+    VULKAN_ERROR,
     IO_ERROR,
     NOT_IMPLEMENTED_ERROR,
     USAGE_ERROR,
     BAD_VALUE_ERROR,
     NOT_INITIALIZED_ERROR,
+    INITIALIZATION_ERROR
 };
 
 /**
@@ -52,6 +54,13 @@ class ErrorHandler{
          * @param level The error level
         */
         static void glfwError(const std::string& fileName, int lineNumber, const std::string& msg, ErrorLevel level = FATAL);
+
+        /**
+         * Handle a vulkan error
+         * @param msg Th error message to display
+         * @param level The error level
+        */
+        static void vulkanError(bool result, const std::string& fileName, int lineNumber, const std::string& msg, ErrorLevel level = FATAL);
 
     private:
         /**

@@ -1,12 +1,11 @@
 #pragma once
 
-#include <glad/gl.h>
 #include <glm/glm.hpp>
 #include <memory>
 
 #include <vector>
 
-namespace glr{
+namespace cr{
 
 // Defines several possible options for camera movement
 // Used as abstraction to stay away from window-system specific input methods
@@ -89,7 +88,7 @@ class Camera{
 
         void processKeyboard(CameraMovement direction, float deltaTime);
 
-        void ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch = true);
+        void ProcessMouseMovement(float xoffset, float yoffset, bool constrainPitch = true);
 
     private:
         void updateCameraVectors();

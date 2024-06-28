@@ -3,6 +3,8 @@
 
 #include "application.hpp"
 
+#include "errorHandler.hpp"
+
 namespace vkr{
 
 void Application::initMemoryAllocator(){
@@ -13,10 +15,11 @@ void Application::initMemoryAllocator(){
     allocatorInfo.instance = _VulkanParameters._Instance;
     allocatorInfo.flags = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
     VkResult result = vmaCreateAllocator(&allocatorInfo, &_VulkanParameters._Allocator);
-    if(result != VK_SUCCESS){
-        fprintf(stderr, "Failed to create the memory allocator!\n");
-        exit(EXIT_FAILURE);
-    }
+    cr::ErrorHandler::vulkanError(
+        result == VK_SUCCESS,
+        __FILE__, __LINE__,
+        "Failed to create the memory allocator!\n"
+    ); 
 }
 
 void Application::destroyMemoryAllocator(){

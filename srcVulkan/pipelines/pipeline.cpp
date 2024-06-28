@@ -2,7 +2,7 @@
 
 namespace vkr {
 
-const std::string Pipeline::COMPILED_SHADER_DIRECTORY = std::string(PROJECT_SOURCE_DIR) + "/shaders/compiled/";
+const std::string Pipeline::COMPILED_SHADER_DIRECTORY = std::string(PROJECT_SOURCE_DIR) + "/srcCommon/shaders/compiled/";
 
 bool Pipeline::loadShaderModule(Slang::ComPtr<slang::IBlob> spirvCode, VkDevice device, VkShaderModule* outShaderModule){
 

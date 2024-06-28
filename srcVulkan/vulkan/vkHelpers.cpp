@@ -1,5 +1,7 @@
 #include "application.hpp"
 
+#include "errorHandler.hpp"
+
 namespace vkr {
 
 void Application::transitionImage(VkCommandBuffer cmd, VkImage image, VkImageLayout currentLayout, VkImageLayout newLayout){
@@ -113,10 +115,11 @@ void Application::waitFences(uint32_t fenceCount, bool shouldWaitAll, uint32_t t
         shouldWaitAll, 
         timeoutInNs
     );
-    if(result != VK_SUCCESS){
-        fprintf(stderr, "Failed to wait for fences!\n");
-        exit(EXIT_FAILURE);
-    }
+    cr::ErrorHandler::vulkanError(
+        result == VK_SUCCESS,
+        __FILE__, __LINE__,
+        "Failed to wait for fences!\n"
+    );
 }
 
 void Application::resetFences(uint32_t fenceCount){
@@ -125,10 +128,11 @@ void Application::resetFences(uint32_t fenceCount){
         fenceCount, 
         &getCurrentFrame()._RenderFence
     );
-    if(result != VK_SUCCESS){
-        fprintf(stderr, "Failed to reset fences!\n");
-        exit(EXIT_FAILURE);
-    }
+    cr::ErrorHandler::vulkanError(
+        result == VK_SUCCESS,
+        __FILE__, __LINE__,
+        "Failed to reset fences!\n"
+    );
 }
 
 uint32_t Application::acquireNextImage(uint32_t timeoutInNs){
@@ -141,42 +145,49 @@ uint32_t Application::acquireNextImage(uint32_t timeoutInNs){
         nullptr, 
         &swapchainImageIndex
     );
-    if(result != VK_SUCCESS){
-        fprintf(stderr, "Failed to acquire next image!\n");
-        exit(EXIT_FAILURE);
-    }
+    cr::ErrorHandler::vulkanError(
+        result == VK_SUCCESS,
+        __FILE__, __LINE__,
+        "Failed to acquire next image!\n"
+    );
     return swapchainImageIndex;
 }
 
 void Application::resetCommandBuffer(VkCommandBuffer commandBuffer){
     VkResult result = vkResetCommandBuffer(commandBuffer, 0);
-    if(result != VK_SUCCESS){
-        fprintf(stderr, "Failed to reset the command buffer!\n");
-        exit(EXIT_FAILURE);
-    }
+    cr::ErrorHandler::vulkanError(
+        result == VK_SUCCESS,
+        __FILE__, __LINE__,
+        "Failed to reset the command buffer!\n"
+    );
 }
 
 void Application::endCommandBuffer(VkCommandBuffer commandBuffer){
     VkResult result = vkEndCommandBuffer(commandBuffer);
-    if(result != VK_SUCCESS){
-        fprintf(stderr, "Failed to end the command buffer!\n");
-        exit(EXIT_FAILURE);
-    }
+    cr::ErrorHandler::vulkanError(
+        result == VK_SUCCESS,
+        __FILE__, __LINE__,
+        "Failed to end the command buffer!\n"
+    );
 }
 
 void Application::beginCommandBuffer(VkCommandBuffer commandBuffer, VkCommandBufferBeginInfo commandBufferBeginInfo){
     VkResult result = vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo);
-    if(result != VK_SUCCESS){
-        fprintf(stderr, "Failed to begin the command buffer!\n");
-        exit(EXIT_FAILURE);
-    }
+    cr::ErrorHandler::vulkanError(
+        result == VK_SUCCESS,
+        __FILE__, __LINE__,
+        "Failed to begin the command buffer!\n"
+    );
 }
 
 std::vector<VkImage> Application::getSwapChainImages(){
     auto swapchain_images_ret = _VulkanParameters._SwapChain.get_images();
     if(!swapchain_images_ret){
-        fprintf(stderr, "Failed to fetch the swapchain images!\n");
-        exit(EXIT_FAILURE);
+        cr::ErrorHandler::handle(
+            __FILE__, __LINE__,
+            cr::ErrorCode::VULKAN_ERROR,
+            "Failed to fetch the swapchain images!\n"
+        );
     }
     return swapchain_images_ret.value();
 }
@@ -205,11 +216,11 @@ void Application::queueSubmit2(VkSubmitInfo2* submit){
         submit, 
         getCurrentFrame()._RenderFence
     );
-
-    if(result != VK_SUCCESS){
-        fprintf(stderr, "Failed to submit the queue!\n");
-        exit(EXIT_FAILURE);
-    }
+    cr::ErrorHandler::vulkanError(
+        result == VK_SUCCESS,
+        __FILE__, __LINE__,
+        "Failed to submit the queue!\n"
+    );
 }
 
 VkPresentInfoKHR Application::getPresentInfo(uint32_t* swapchainImageIndex){
@@ -229,10 +240,11 @@ VkPresentInfoKHR Application::getPresentInfo(uint32_t* swapchainImageIndex){
 
 void Application::queuePresent(VkPresentInfoKHR* presentInfo){
 	VkResult result = vkQueuePresentKHR(_VulkanParameters._GraphicsQueue, presentInfo);
-    if(result != VK_SUCCESS){
-        fprintf(stderr, "Failed to present the queue!\n");
-        exit(EXIT_FAILURE);
-    }
+    cr::ErrorHandler::vulkanError(
+        result == VK_SUCCESS,
+        __FILE__, __LINE__,
+        "Failed to present the queue!\n"
+    );
 }
 
 }
