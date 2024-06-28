@@ -16,12 +16,12 @@ Application::Application(ApplicationParameters parameters){
 void Application::initCamera() {
     float aspectRatio = static_cast<float>(_Parameters._ViewportWidth) / static_cast<float>(_Parameters._ViewportHeight);
     glm::vec3 position = glm::vec3(0.f, 0.f, -5.f);
-    _Camera = CameraPtr(new Camera(position, aspectRatio));
+    _Camera = cr::CameraPtr(new cr::Camera(position, aspectRatio));
 }
 
 void Application::initGLFW() const {
     if(glfwInit() != GLFW_TRUE){
-        ErrorHandler::glfwError(__FILE__, __LINE__, "Failed to initialize GLFW!\n");
+        cr::ErrorHandler::glfwError(__FILE__, __LINE__, "Failed to initialize GLFW!\n");
     }
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, _Parameters._OpenglVersionMajor);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, _Parameters._OpenglVersionMinor);
@@ -44,7 +44,7 @@ void Application::initWindow(){
                 share
             );
     if(_Window == nullptr){
-        ErrorHandler::glfwError(__FILE__, __LINE__, "Failed to initialize the window!\n");
+        cr::ErrorHandler::glfwError(__FILE__, __LINE__, "Failed to initialize the window!\n");
     }
     // center window
     const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
@@ -70,10 +70,10 @@ void Application::quitWindow() const {
 
 void Application::initGLAD() const{
     if(!gladLoadGL((GLADloadfunc)glfwGetProcAddress)){
-        ErrorHandler::handle(
+        cr::ErrorHandler::handle(
             __FILE__, 
             __LINE__, 
-            ErrorCode::GLAD_ERROR,
+            cr::ErrorCode::GLAD_ERROR,
             "Failed to initialize GLAD!\n"
         );
     }
@@ -90,7 +90,7 @@ void Application::initViewport() const {
 }
 
 void Application::initCallbacks() {
-    glfwSetCursorPosCallback(_Window, Input::mouseCallback);
+    glfwSetCursorPosCallback(_Window, mouseCallback);
 }
 
 void Application::processInput() const {
@@ -98,7 +98,7 @@ void Application::processInput() const {
         glfwSetWindowShouldClose(_Window, GLFW_TRUE);
     }
     float dt = glfwGetTime() - _FPS._LastFrame;
-    Input::cameraInput(_Window, _Camera, dt);
+    cr::Input::cameraInput(_Window, _Camera, dt);
 }
 
 void Application::clearScreen() const {
@@ -133,9 +133,9 @@ void Application::initRectangleVAO() {
     // Generate VAO
     glGenVertexArrays(1, &_RectangleVao);
     if(_RectangleVao == 0){
-        ErrorHandler::handle(
+        cr::ErrorHandler::handle(
             __FILE__, __LINE__, 
-            ErrorCode::OPENGL_ERROR,
+            cr::ErrorCode::OPENGL_ERROR,
             "Failed to generate the rectangle vao!\n"
         );
     }
@@ -144,9 +144,9 @@ void Application::initRectangleVAO() {
     // Generate VBO for positions
     glGenBuffers(1, &vboPositions);
     if(vboPositions == 0){
-        ErrorHandler::handle(
+        cr::ErrorHandler::handle(
             __FILE__, __LINE__, 
-            ErrorCode::OPENGL_ERROR,
+            cr::ErrorCode::OPENGL_ERROR,
             "Failed to generate the rectangle's positions vbo!\n"
         );
     }
@@ -158,9 +158,9 @@ void Application::initRectangleVAO() {
     // Generate VBO for texture coordinates
     glGenBuffers(1, &vboTexCoords);
     if(vboPositions == 0){
-        ErrorHandler::handle(
+        cr::ErrorHandler::handle(
             __FILE__, __LINE__, 
-            ErrorCode::OPENGL_ERROR,
+            cr::ErrorCode::OPENGL_ERROR,
             "Failed to generate the rectangle's texture coordinates vbo!\n"
         );
     }
@@ -179,7 +179,7 @@ void Application::initScene() {
     _Scene->addMaterial({0.2, 0.3, 0.1, 1.});
 
     // load model
-    MeshPtr model = Mesh::load(Mesh::MODELS_DIRECTORY + "teapot.obj");
+    cr::MeshPtr model = cr::Mesh::load(cr::Mesh::MODELS_DIRECTORY + "teapot.obj");
     // MeshPtr model = Mesh::load(Mesh::MODELS_DIRECTORY + "suzanne.obj");
     model->setMaterial(1);
     _Scene->addMesh(model);
@@ -190,12 +190,12 @@ void Application::initScene() {
     // _Scene->addMesh(basicTri);
 
     // // random materials
-    // for(size_t i=0; i<MAX_NB_MATERIALS; i++){
+    // for(size_t i=0; i<Material::MAX_NB_MATERIALS; i++){
     //     _Scene->addRandomMaterial();
     // }
     // // random triangles
     // MeshPtr randTri = Mesh::primitiveTriangle();
-    // randTri->setMaterial(static_cast<uint32_t>(static_cast<float>(rand())/RAND_MAX*static_cast<float>(MAX_NB_MATERIALS)));
+    // randTri->setMaterial(static_cast<uint32_t>(static_cast<float>(rand())/RAND_MAX*static_cast<float>(Material::MAX_NB_MATERIALS)));
     // randTri->setRotation(
     //     2.f*rand()/RAND_MAX*std::numbers::pi - std::numbers::pi, 
     //     2.f*rand()/RAND_MAX*std::numbers::pi - std::numbers::pi,
@@ -204,12 +204,12 @@ void Application::initScene() {
     // _Scene->addMesh(randTri);
 }
 
-CameraPtr Application::getCamera() const{
+cr::CameraPtr Application::getCamera() const{
     if(!_Camera){
-        ErrorHandler::handle(
+        cr::ErrorHandler::handle(
             __FILE__, 
             __LINE__, 
-            ErrorCode::NOT_INITIALIZED_ERROR,
+            cr::ErrorCode::NOT_INITIALIZED_ERROR,
             "Can't access an unitilialized camera!\n"
         );
     }
@@ -232,7 +232,7 @@ void Application::drawOneFrame() const {
     _ComputeProgram->setInt("uDepthDisplayBVH", _Options._DepthDisplayBVH);
     // send camera data
     assert(_Camera);
-    CameraGPU cameraDataToSend = _Camera->getGpuData();
+    cr::CameraGPU cameraDataToSend = _Camera->getGpuData();
     _ComputeProgram->setMat4("uCamera._View", cameraDataToSend._View);
     _ComputeProgram->setMat4("uCamera._Proj", cameraDataToSend._Proj);
     _ComputeProgram->setMat4("uCamera._InvView", cameraDataToSend._InvView);
@@ -315,9 +315,9 @@ void Application::mainLoop(){
 void Application::initTexture(){
     glGenTextures(1, &_ImageTextureId);
     if(_ImageTextureId == 0){
-        ErrorHandler::handle(
+        cr::ErrorHandler::handle(
             __FILE__, __LINE__, 
-            ErrorCode::OPENGL_ERROR,
+            cr::ErrorCode::OPENGL_ERROR,
             "Failed to generate the texture!\n"
         );
     }
@@ -425,5 +425,12 @@ Application Application::dummyApplication(){
 void Application::swapBuffers() const {
     glfwSwapBuffers(_Window);
 }
+
+void Application::mouseCallback(GLFWwindow* window, double xpos, double ypos){
+    Application* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
+    assert(app);
+    cr::Input::mouseInput(window, app->_Camera, xpos, ypos);
+}
+
 
 }

@@ -6,24 +6,29 @@ MAIN_PRGM_VULKAN=srcVulkan/appVersionVulkan
 
 # Default to OpenGL
 use_opengl=true
+compile=true  # Default to compile before running
 
 # Function to display help message
 usage() {
-  echo "Usage: $0 [-v] [-g] [-h]"
+  echo "Usage: $0 [-v] [-g] [-r] [-h|--help]"
   echo "  -v        Use Vulkan version"
   echo "  -g        Use OpenGL version (default)"
+  echo "  -r        Run only, skip compilation"
   echo "  -h, --help Display this help message"
   exit 0
 }
 
 # Parse arguments
-while getopts ":vgh-:" opt; do
+while getopts ":vgrh-:" opt; do
   case ${opt} in
     v )
       use_opengl=false
       ;;
     g )
       use_opengl=true
+      ;;
+    r )
+      compile=false
       ;;
     h )
       usage
@@ -50,8 +55,10 @@ while getopts ":vgh-:" opt; do
   esac
 done
 
-# Build the project
-make -C ${BUILD_DIR}
+# Build the project if compile flag is true
+if $compile; then
+  make -C ${BUILD_DIR}
+fi
 
 # Run the appropriate program
 if $use_opengl; then

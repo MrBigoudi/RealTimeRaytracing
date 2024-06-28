@@ -1,3 +1,7 @@
+# Add slang subdirectory
+add_subdirectory(slang)
+
+# Add vk-bootstrap subdirectory
 add_subdirectory(vk-bootstrap)
 
 target_sources(commonVulkan

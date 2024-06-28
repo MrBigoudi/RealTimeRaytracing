@@ -9,14 +9,20 @@ To run this project, first clone the github project:
 git clone git@github.com:MrBigoudi/RealTimeRaytracing.git
 ```
 
-Then launch the project
+From there, clone the submodules:
 ```sh
 cd RealTimeRaytracing
+git submodule update --init --recursive
+```
+
+Then launch the project
+```sh
 ./run_app.sh --help
 ./run_app.sh
 ```
 
 You can also run tests with
 ```sh
+./run_tests.sh --help
 ./run_tests.sh
 ```

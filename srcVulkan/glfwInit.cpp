@@ -2,16 +2,16 @@
 #include <GLFW/glfw3.h>
 
 #include "application.hpp"
+#include "errorHandler.hpp"
 
 namespace vkr{
 
 void Application::initGLFW(){
     if(glfwInit() != GLFW_TRUE){
-        fprintf(
-            stderr,
+        cr::ErrorHandler::glfwError(
+            __FILE__, __LINE__, 
             "Failed to initialize GLFW!\n"
         );
-        exit(EXIT_FAILURE);
     }
 }
 
@@ -32,8 +32,9 @@ void Application::initWindow(){
                 share
             );
     if(_Window == nullptr){
-        fprintf(
-            stderr,
+        cr::ErrorHandler::handle(
+            __FILE__, __LINE__, 
+            cr::ErrorCode::INITIALIZATION_ERROR,
             "Failed to initialize the window!\n"
         );
         exit(EXIT_FAILURE);

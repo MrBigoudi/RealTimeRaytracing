@@ -1,21 +1,24 @@
 set(SCENE_SOURCE_FILES
-    scene.cpp
+    camera.cpp
 )
 
 set(SCENE_HEADER_FILES
-    scene.hpp
+    camera.hpp
 )
 
-target_sources(commonOpenGL 
+target_sources(common 
     PUBLIC 
         ${SCENE_HEADER_FILES}
     PRIVATE 
         ${SCENE_SOURCE_FILES}
 )
 
-target_include_directories(commonOpenGL 
+target_include_directories(common 
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
         $<INSTALL_INTERFACE:include>
     PRIVATE
 )
+
+add_subdirectory(geometry)
+add_subdirectory(pbr)

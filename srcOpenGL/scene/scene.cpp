@@ -14,21 +14,21 @@ Scene::Scene(){
     createSSBO();
 }
 
-std::vector<MeshModelGPU> Scene::getMeshModelToGPUData() const {
-    std::vector<MeshModelGPU> modelsGPU = std::vector<MeshModelGPU>(MAX_NB_MESHES);
-    for(int i=0; i<std::min(static_cast<int>(_Meshes.size()), MAX_NB_MESHES); i++){
+std::vector<cr::MeshModelGPU> Scene::getMeshModelToGPUData() const {
+    std::vector<cr::MeshModelGPU> modelsGPU = std::vector<cr::MeshModelGPU>(cr::Mesh::MAX_NB_MESHES);
+    for(size_t i=0; i<std::min(_Meshes.size(), cr::Mesh::MAX_NB_MESHES); i++){
         modelsGPU[i] = _Meshes[i]->_InternalStruct;
     }
     return modelsGPU;
 }
 
 
-std::vector<TriangleGPU> Scene::getTriangleToGPUData() const {
-    std::vector<TriangleGPU> trianglesGPU = std::vector<TriangleGPU>(MAX_NB_TRIANGLES);
+std::vector<cr::TriangleGPU> Scene::getTriangleToGPUData() const {
+    std::vector<cr::TriangleGPU> trianglesGPU = std::vector<cr::TriangleGPU>(cr::Triangle::MAX_NB_TRIANGLES);
     uint32_t i = 0;
-    for(MeshPtr mesh : _Meshes){
-        for(Triangle triangle : mesh->_Triangles){
-            if(i == MAX_NB_TRIANGLES){
+    for(cr::MeshPtr mesh : _Meshes){
+        for(cr::Triangle triangle : mesh->_Triangles){
+            if(i == cr::Triangle::MAX_NB_TRIANGLES){
                 break;
             }
             trianglesGPU[i] = triangle._InternalStruct;
@@ -39,29 +39,29 @@ std::vector<TriangleGPU> Scene::getTriangleToGPUData() const {
     return trianglesGPU;
 }
 
-std::vector<MaterialGPU> Scene::getMaterialToGPUData() const {
-    std::vector<MaterialGPU> materialGPU = std::vector<MaterialGPU>(MAX_NB_MATERIALS);
-    for(int i=0; i<std::min(static_cast<int>(_Materials.size()), MAX_NB_MATERIALS); i++){
+std::vector<cr::MaterialGPU> Scene::getMaterialToGPUData() const {
+    std::vector<cr::MaterialGPU> materialGPU = std::vector<cr::MaterialGPU>(cr::Material::MAX_NB_MATERIALS);
+    for(size_t i=0; i<std::min(_Materials.size(), cr::Material::MAX_NB_MATERIALS); i++){
         materialGPU[i] = _Materials[i]._InternalStruct;
     }
     return materialGPU;
 }
 
-void Scene::addMesh(MeshPtr mesh){
-    if(_Meshes.size() == MAX_NB_MESHES) return;
+void Scene::addMesh(cr::MeshPtr mesh){
+    if(_Meshes.size() == cr::Mesh::MAX_NB_MESHES) return;
     _Meshes.push_back(mesh);
     _NbMeshes++;
-    _NbTriangles += std::min(static_cast<int>(mesh->_Triangles.size()), MAX_NB_TRIANGLES);
+    _NbTriangles += std::min(mesh->_Triangles.size(), cr::Triangle::MAX_NB_TRIANGLES);
 }
 
 void Scene::addMaterial(const glm::vec4& color){
-    if(_Materials.size() == MAX_NB_MATERIALS) return;
+    if(_Materials.size() == cr::Material::MAX_NB_MATERIALS) return;
     _Materials.emplace_back(color);
     _NbMaterials++;
 }
 
 void Scene::addRandomMaterial(){
-    if(_Materials.size() == MAX_NB_MATERIALS) return;
+    if(_Materials.size() == cr::Material::MAX_NB_MATERIALS) return;
     _Materials.emplace_back();
     _NbMaterials++;
 }
@@ -77,10 +77,10 @@ void Scene::createSSBO(){
     assert(_BVH_SSBO != 0);
 
     // Calculate the total size of the buffer
-    size_t materialsSize = sizeof(MaterialGPU) * MAX_NB_MATERIALS;
-    size_t trianglesSize = sizeof(TriangleGPU) * MAX_NB_TRIANGLES;
-    size_t modelsSize = sizeof(MeshModelGPU) * MAX_NB_MESHES;
-    size_t bvhSize = (sizeof(BVH_NodeGPU) * ((2*MAX_NB_TRIANGLES)-1)) + (sizeof(uint32_t) * MAX_NB_TRIANGLES);
+    size_t materialsSize = sizeof(cr::MaterialGPU) * cr::Material::MAX_NB_MATERIALS;
+    size_t trianglesSize = sizeof(cr::TriangleGPU) * cr::Triangle::MAX_NB_TRIANGLES;
+    size_t modelsSize = sizeof(cr::MeshModelGPU) * cr::Mesh::MAX_NB_MESHES;
+    size_t bvhSize = (sizeof(cr::BVH_NodeGPU) * ((2*cr::Triangle::MAX_NB_TRIANGLES)-1)) + (sizeof(uint32_t) * cr::Triangle::MAX_NB_TRIANGLES);
 
     glNamedBufferStorage(_MaterialsSSBO, 
                     materialsSize, 
@@ -111,7 +111,7 @@ void Scene::bindSSBO(){
     // materials
     GLuint materialsBinding = 2;
     auto materialGPU = getMaterialToGPUData();
-    GLsizeiptr materialsSize = sizeof(MaterialGPU) * _NbMaterials;
+    GLsizeiptr materialsSize = sizeof(cr::MaterialGPU) * _NbMaterials;
     // update the materials
     glNamedBufferSubData(_MaterialsSSBO,
         0,
@@ -123,7 +123,7 @@ void Scene::bindSSBO(){
     // triangles
     GLuint trianglesBinding = 3;
     auto triangleGPU = getTriangleToGPUData();
-    GLsizeiptr trianglesSize = sizeof(TriangleGPU) * _NbTriangles;
+    GLsizeiptr trianglesSize = sizeof(cr::TriangleGPU) * _NbTriangles;
     // update the materials
     glNamedBufferSubData(_TrianglesSSBO,
         0,
@@ -135,7 +135,7 @@ void Scene::bindSSBO(){
     // models
     GLuint modelsBinding = 4;
     auto modelsGPU = getMeshModelToGPUData();
-    GLsizeiptr modelsSize = sizeof(MeshModelGPU) * _NbMeshes;
+    GLsizeiptr modelsSize = sizeof(cr::MeshModelGPU) * _NbMeshes;
     // update the materials
     glNamedBufferSubData(_MeshModelsSSBO,
         0,
@@ -145,7 +145,7 @@ void Scene::bindSSBO(){
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, modelsBinding, _MeshModelsSSBO);
 
     // bvh
-    _BVH = BVH_Ptr(new BVH(_NbTriangles, triangleGPU, modelsGPU));
+    _BVH = cr::BVH_Ptr(new cr::BVH(_NbTriangles, triangleGPU, modelsGPU));
     // _BVH->_InternalStruct.printIsLeaf();
     // _BVH->_InternalStruct.printLeftChild();
     // _BVH->_InternalStruct.printRightChild();
@@ -167,7 +167,7 @@ void Scene::bindSSBO(){
     //     );
     // }
     // exit(EXIT_SUCCESS);
-    GLsizeiptr bvhNodesSize = sizeof(BVH_NodeGPU) * bvhNodesGPU.size();
+    GLsizeiptr bvhNodesSize = sizeof(cr::BVH_NodeGPU) * bvhNodesGPU.size();
     glNamedBufferSubData(_BVH_SSBO, 
         0, 
         bvhNodesSize, 
@@ -177,17 +177,17 @@ void Scene::bindSSBO(){
 
     // tests
     if(glGetError() != GL_NO_ERROR){
-        ErrorHandler::handle(
+        cr::ErrorHandler::handle(
             __FILE__,
             __LINE__,
-            ErrorCode::OPENGL_ERROR,
+            cr::ErrorCode::OPENGL_ERROR,
             "Failed to bind the ssbos\n"
         );
     }
 }
 
-void Scene::recursiveTopDownTraversalBVH(std::vector<BVH_NodeGPU>& bvhNodesGPU, BVH_Ptr bvh, uint32_t nodeId) const {
-    BVH_NodeGPU curNode = bvh->_InternalStruct._Clusters[nodeId].value();
+void Scene::recursiveTopDownTraversalBVH(std::vector<cr::BVH_NodeGPU>& bvhNodesGPU, cr::BVH_Ptr bvh, uint32_t nodeId) const {
+    cr::BVH_NodeGPU curNode = bvh->_InternalStruct._Clusters[nodeId].value();
     uint32_t position = bvhNodesGPU.size();
     bvhNodesGPU.push_back(curNode);
     if(!bvh->_InternalStruct._IsLeaf[nodeId]){
@@ -200,8 +200,8 @@ void Scene::recursiveTopDownTraversalBVH(std::vector<BVH_NodeGPU>& bvhNodesGPU, 
     }
 }
 
-std::vector<BVH_NodeGPU> Scene::getBVH_NodesToGPUData(BVH_Ptr bvh) const{
-    std::vector<BVH_NodeGPU> bvhNodesGPU = std::vector<BVH_NodeGPU>();
+std::vector<cr::BVH_NodeGPU> Scene::getBVH_NodesToGPUData(cr::BVH_Ptr bvh) const{
+    std::vector<cr::BVH_NodeGPU> bvhNodesGPU = std::vector<cr::BVH_NodeGPU>();
     uint32_t rootId = 2*_NbTriangles - 2;
     recursiveTopDownTraversalBVH(bvhNodesGPU, bvh, rootId);
     return bvhNodesGPU;

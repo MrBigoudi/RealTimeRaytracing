@@ -1,9 +1,12 @@
 # Add commonVulkan library
 add_library(commonVulkan)
 
+add_subdirectory(dep)
+add_subdirectory(vulkan)
+add_subdirectory(pipelines)
+
 set(SOURCE_FILES 
     glfwInit.cpp
-    vulkanInit.cpp
     application.cpp
 )
 
@@ -25,18 +28,27 @@ target_include_directories(commonVulkan
     PRIVATE
 )
 
+# Link library
+target_link_libraries(commonVulkan PRIVATE 
+    common
+)
+
 # Add executable
 add_executable(appVersionVulkan main.cpp)
 
+find_package(Vulkan REQUIRED)
+find_package(VulkanMemoryAllocator CONFIG REQUIRED)
+
 # Link dependencies
 target_link_libraries(appVersionVulkan PRIVATE 
+    common
     commonVulkan
+    slang
+    vk-bootstrap::vk-bootstrap
     glfw 
-    Vulkan::Vulkan 
+    Vulkan::Vulkan
     OpenMP::OpenMP_CXX
     cflags 
     tinyobjloader
-    vk-bootstrap::vk-bootstrap
+    GPUOpen::VulkanMemoryAllocator
 )
-
-add_subdirectory(dep)
