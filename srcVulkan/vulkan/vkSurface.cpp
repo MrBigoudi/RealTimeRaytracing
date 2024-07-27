@@ -7,7 +7,12 @@
 namespace vkr{
 
 void Application::initSurface(){
-    VkResult result = glfwCreateWindowSurface(_VulkanParameters._Instance, _Window, NULL, &_VulkanParameters._Surface);
+    VkResult result = glfwCreateWindowSurface(
+        _VulkanParameters._Instance, 
+        _Window, 
+        NULL, 
+        &_VulkanParameters._Surface
+    );
     cr::ErrorHandler::vulkanError(
         result == VK_SUCCESS,
         __FILE__, __LINE__,

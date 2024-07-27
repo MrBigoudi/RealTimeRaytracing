@@ -20,7 +20,7 @@ void GradientPipeline::init(const SlangParameters& slangParamaters, const Vulkan
     slang::IModule* slangModule = nullptr;
     {
         Slang::ComPtr<slang::IBlob> diagnosticsBlob;
-        slangModule = slangParamaters._Session->loadModule((Pipeline::COMPILED_SHADER_DIRECTORY + "gradient").c_str(), diagnosticsBlob.writeRef());
+        slangModule = slangParamaters._Session->loadModule((Pipeline::COMPILED_SHADER_DIRECTORY + "raytracer").c_str(), diagnosticsBlob.writeRef());
         if(!slangModule){
             fprintf(stderr, 
             "Failed to load the slang module: %s\n",
